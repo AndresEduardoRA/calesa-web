@@ -1,4 +1,5 @@
-// Números y montos con Intl, en el locale del proyecto. Nunca `toFixed` ni concatenar símbolos.
+// Números y montos con Intl, en el locale del proyecto. Nunca `toFixed` ni concatenar símbolos. La excepción es `formatoUSD`, por
+// la semilla (§5.1): `Intl` en es-BO escribe «USD» y Calesa muestra «US$ 4.452» (decisión de P01).
 // En pantalla los montos pasan por el componente de montos del sistema de diseño; esto es el texto que imprime.
 
 // semilla-a-repo lo cambia por el locale de la semilla.
@@ -57,4 +58,23 @@ export function formatearPorcentaje(fraccion: number, opciones: OpcionesNumero =
 export function formatearParaEditar(valor: number, opciones: { locale?: string } = {}): string {
   const { locale = LOCALE_POR_DEFECTO } = opciones
   return formateador(locale, { maximumSignificantDigits: 15, useGrouping: false }).format(valor)
+}
+
+// Los montos de Calesa (semilla §5.1): «US$ », un espacio normal y el entero, con la mitad hacia arriba (X3) y punto de miles.
+// 4451.87 → «US$ 4.452»; -1234.5 → «-US$ 1.235» (la semilla no define los negativos); -0.4 → «US$ 0», nunca «-0».
+export function formatoUSD(valor: number): string {
+  if (!Number.isFinite(valor)) return '—'
+  const cifra = formateador(LOCALE_POR_DEFECTO, {
+    maximumFractionDigits: 0,
+    roundingMode: 'halfExpand',
+    useGrouping: 'always',
+    signDisplay: 'negative',
+  }).format(valor)
+  const negativo = cifra.startsWith('-') || cifra.startsWith('−')
+  return negativo ? `-US$ ${cifra.slice(1)}` : `US$ ${cifra}`
+}
+
+// Un rango de montos, sin reordenar: «US$ 4.452 – US$ 8.935» (raya U+2013 entre espacios).
+export function formatoRango(desde: number, hasta: number): string {
+  return `${formatoUSD(desde)} – ${formatoUSD(hasta)}`
 }

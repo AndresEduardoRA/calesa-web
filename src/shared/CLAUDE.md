@@ -12,7 +12,7 @@ Infraestructura transversal sin reglas de negocio: clientes de Supabase, errores
 - `lib/supabase/` — `server.ts` (`createClient()`, uno por request), `browser.ts`, `admin.ts` (secret key, salta la RLS), `proxy.ts` (`actualizarSesion()`).
 - `lib/safe-action.ts` — `actionClient` (exige sesión; `ctx` trae `supabase` y `usuarioId`) y `actionClientPublico`. Toda mutación entra por acá.
 - `lib/errores.ts` — `Resultado<T>`, `ok()`, `fallo()`, `conflicto()`, `errorDePostgrest()` (`PT409` → conflicto, `42501` → sin_permiso, `23505` → duplicado), `datosO()`.
-- `lib/formato.ts`, `lib/fechas.ts` — todo número y toda fecha salen de acá, en el locale y la zona del proyecto.
+- `lib/formato.ts`, `lib/fechas.ts` — todo número y toda fecha salen de acá, en el locale y la zona del proyecto. Los montos de Calesa: `formatoUSD()` («US$ 4.452», entero con la mitad hacia arriba) y `formatoRango()` («US$ 4.452 – US$ 8.935»).
 - `lib/paginacion.ts` — el tamaño de toda página sale de acá (`TAMANOS_DE_PAGINA`, `tamanoDePagina()`, `TAMANO_DE_VER_MAS`, `TOPE_DE_LO_CARGADO`); keyset `leerCursor()`, `codificarCursor()`, `armarPagina()`.
 - `lib/conteo.ts` — un número que se muestra nunca es un total exacto: `conteoAcotado()`, `cantidadAcotada()`, `cortarAlTope()`, `textoDelTope()`.
 - `lib/email/` — `enviarEmail()`: la única puerta del correo; un adaptador REST por proveedor (`EMAIL_PROVEEDOR`: `mailpit` y `resend`, en `adaptadores/resend-api.ts` porque el lint atrapa un import llamado `resend`). `programarEmail()`, `cancelarEmail()` y `reprogramarEmail()` sólo con Resend (`programaCorreos()`); con Mailpit o `ninguno` dan `regla` sin red. `referencia` es la clave de idempotencia: una por cuerpo.
