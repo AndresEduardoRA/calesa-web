@@ -19,6 +19,30 @@ describe('leerEntornoPublico()', () => {
   })
 })
 
+describe('urlDelSitio() sin entorno explícito', () => {
+  // `entornoPublico()` guarda lo validado en el módulo: cada prueba importa uno nuevo.
+  const kit = {
+    NEXT_PUBLIC_SUPABASE_URL: 'http://127.0.0.1:55321',
+    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: 'p',
+  }
+  const conEntorno = async (variables: Record<string, string>) => {
+    for (const [nombre, valor] of Object.entries({ ...kit, ...variables }))
+      vi.stubEnv(nombre, valor)
+    vi.resetModules()
+    return (await import('./entorno')).urlDelSitio
+  }
+
+  it('lee la URL del sitio ya validada por entornoPublico()', async () => {
+    const url = await conEntorno({ NEXT_PUBLIC_SITIO_URL: 'https://calesa.app/' })
+    expect(url('http://localhost:8310')).toBe('https://calesa.app')
+  })
+
+  it('una URL del sitio que no es URL no llega: cae al validar lo público', async () => {
+    const url = await conEntorno({ NEXT_PUBLIC_SITIO_URL: 'calesa.app' })
+    expect(() => url()).toThrow('NEXT_PUBLIC_SITIO_URL: no es una URL')
+  })
+})
+
 describe('urlDelSitio()', () => {
   it('con la variable, la devuelve sin barra final aunque haya respaldo', () => {
     const entorno = { NEXT_PUBLIC_SITIO_URL: 'https://calesa.app/' }
