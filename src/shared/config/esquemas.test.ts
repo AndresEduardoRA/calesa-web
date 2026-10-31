@@ -68,12 +68,25 @@ describe('el entorno: el servidor', () => {
   it('un proveedor sin adaptador lo dice en vez de fallar al primer correo', () => {
     const p = problemasDe(esquemaDelServidor, {
       ...base,
-      EMAIL_PROVEEDOR: 'resend',
+      EMAIL_PROVEEDOR: 'cloudflare',
       EMAIL_REMITENTE: 'a@b.co',
       EMAIL_REMITENTE_NOMBRE: 'X',
     })
     expect(p).toHaveLength(1)
     expect(p[0]?.motivo).toContain('todavía no tiene adaptador')
+  })
+
+  it('resend pide su clave en cualquier entorno', () => {
+    const conResend = {
+      ...base,
+      EMAIL_PROVEEDOR: 'resend',
+      EMAIL_REMITENTE: 'hola@getcalesa.com',
+      EMAIL_REMITENTE_NOMBRE: 'Calesa',
+    }
+    expect(problemasDe(esquemaDelServidor, conResend)).toEqual([
+      { variable: 'RESEND_API_KEY', motivo: 'falta (EMAIL_PROVEEDOR=resend)' },
+    ])
+    expect(problemasDe(esquemaDelServidor, { ...conResend, RESEND_API_KEY: 're_x' })).toEqual([])
   })
 
   it('un proveedor que no existe se nombra con los que hay', () => {
@@ -93,6 +106,9 @@ const publicas = {
 const secreto = 'a'.repeat(32)
 const delServidor = {
   SUPABASE_SECRET_KEY: 'sb_secret_x',
+  EMAIL_PROVEEDOR: 'resend',
+  EMAIL_REMITENTE: 'hola@getcalesa.com',
+  EMAIL_REMITENTE_NOMBRE: 'Calesa',
   RESEND_API_KEY: 're_prueba',
   TURNSTILE_SECRET_KEY: '1x0000000000000000000000000000000AA',
   CRON_SECRET: secreto,
@@ -122,7 +138,10 @@ describe('el entorno: lo que exige Vercel', () => {
           'TOKEN_FIRMA_SECRETO',
           'IP_SAL_SECRETO',
           'ADMIN_EMAIL',
+          'EMAIL_REMITENTE',
+          'EMAIL_REMITENTE_NOMBRE',
         ]),
+        { variable: 'EMAIL_PROVEEDOR', motivo: 'en Vercel es resend' },
       ])
     }
   })
@@ -149,6 +168,18 @@ describe('el entorno: lo que exige Vercel', () => {
         VERCEL_ENV: 'production',
       }),
     ).toEqual([{ variable: 'NEXT_PUBLIC_SITIO_URL', motivo: 'en producción es https' }])
+  })
+
+  it('en Vercel el correo sale por resend', () => {
+    for (const EMAIL_PROVEEDOR of ['mailpit', 'ninguno'])
+      expect(
+        problemasDe(esquemaDelServidor, {
+          ...delServidor,
+          EMAIL_PROVEEDOR,
+          MAILPIT_URL: 'http://127.0.0.1:55324',
+          VERCEL_ENV: 'preview',
+        }),
+      ).toEqual([{ variable: 'EMAIL_PROVEEDOR', motivo: 'en Vercel es resend' }])
   })
 
   it('sin VERCEL_ENV, o con development, bastan las tres del kit', () => {

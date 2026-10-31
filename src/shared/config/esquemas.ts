@@ -28,6 +28,9 @@ const DEL_SERVIDOR_EN_VERCEL = [
   'TOKEN_FIRMA_SECRETO',
   'IP_SAL_SECRETO',
   'ADMIN_EMAIL',
+  // El kit los pide con un proveedor, pero su regla no corre si el objeto ya falló: aquí salen en la misma vuelta.
+  'EMAIL_REMITENTE',
+  'EMAIL_REMITENTE_NOMBRE',
 ] as const
 
 // Va con `{ when: () => true }`: sin él, Zod 4 la salta si el objeto ya falló, y una vuelta de `env:check` nombraría sólo lo del
@@ -56,11 +59,23 @@ function sitioConHttps(e: Record<string, unknown>, ctx: z.RefinementCtx) {
     })
 }
 
+// En una vista previa o en producción el correo sale por Resend (semilla §4): con mailpit o ninguno no saldría nada.
+function correoPorResend(e: Record<string, unknown>, ctx: z.RefinementCtx) {
+  const despliegue = e['VERCEL_ENV']
+  if (despliegue !== 'production' && despliegue !== 'preview') return
+  if (e['EMAIL_PROVEEDOR'] !== 'resend')
+    ctx.addIssue({ code: 'custom', path: ['EMAIL_PROVEEDOR'], message: 'en Vercel es resend' })
+}
+
 export const PROVEEDORES_DE_EMAIL = ['ninguno', 'mailpit', 'resend', 'cloudflare'] as const
 export type ProveedorDeEmail = (typeof PROVEEDORES_DE_EMAIL)[number]
 
 // Los proveedores con adaptador en `src/shared/lib/email/adaptadores/`. Los demás se nombran para decirlo antes del primer correo.
-export const PROVEEDORES_CON_ADAPTADOR: readonly ProveedorDeEmail[] = ['ninguno', 'mailpit']
+export const PROVEEDORES_CON_ADAPTADOR: readonly ProveedorDeEmail[] = [
+  'ninguno',
+  'mailpit',
+  'resend',
+]
 
 // Lo pone Vercel en cada despliegue. Sin ella (local, carriles, CI, e2e) no se exige nada de lo que pide sólo Vercel.
 export const ENTORNOS_DE_VERCEL = ['production', 'preview', 'development'] as const
@@ -123,6 +138,13 @@ export const esquemaDelServidor = z
         message: 'falta (EMAIL_PROVEEDOR=mailpit)',
       })
     }
+    if (e.EMAIL_PROVEEDOR === 'resend' && !e.RESEND_API_KEY) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['RESEND_API_KEY'],
+        message: 'falta (EMAIL_PROVEEDOR=resend)',
+      })
+    }
     if (!PROVEEDORES_CON_ADAPTADOR.includes(e.EMAIL_PROVEEDOR)) {
       ctx.addIssue({
         code: 'custom',
@@ -132,6 +154,7 @@ export const esquemaDelServidor = z
     }
   })
   .superRefine(exigirEnVercel(DEL_SERVIDOR_EN_VERCEL), { when: () => true })
+  .superRefine(correoPorResend, { when: () => true })
 
 // `.env.demo`: lo que leen los scripts de la demo (un proyecto de Supabase en la nube, sin datos reales). Nunca lo lee la app.
 export const esquemaDeLaDemo = z.object({
