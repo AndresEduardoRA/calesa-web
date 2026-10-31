@@ -1,0 +1,132 @@
+/*
+ * Tokens de diseño — fuente de verdad. `src/app/globals.css` los importa sin capa (así pisan el tema por defecto de Tailwind)
+ * y los usa con la sintaxis de variable: `bg-(--color-surface)`, `text-(--color-ink)`, `shadow-(--shadow-md)`. Nunca un color
+ * suelto en un componente.
+ *
+ * Reglas:
+ *  - `-ink` es para texto e íconos (≥ 4.5:1 sobre su superficie); el tono base es para rellenos.
+ *  - Los tonos semánticos (positivo, aviso, peligro, info) NO conmutan con el tema; sus `-soft` e `-ink` sí.
+ *  - Los nombres de los tokens son el contrato: los usan `globals.css`, `src/shared/ui/` y las reglas (`.claude/rules/ui.md`).
+ *    Los valores, no: los pone la semilla.
+ *  - Lo que tiene copia en `src/shared/config/app.ts` (el manifest no lee variables CSS) lo vigila `app.test.ts`.
+ */
+
+/* ==================================================================================================================================
+ * semilla:inicio — el sistema de diseño de la semilla (docs/semilla/semilla.md › Sistema de diseño). Se cambia en la semilla.
+ * ================================================================================================================================ */
+
+:root {
+  --font-sans: "Archivo", "Arial", sans-serif;
+  --font-mono: "JetBrains Mono", "Consolas", monospace;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.75rem;
+  --text-2xl: 2.25rem;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-card: 16px;
+  --radius-pill: 999px;
+  --fila-compacta: 44px;
+  --fila-comoda: 48px;
+  --sidebar: 15.5rem;
+  --topbar: 3.5rem;
+  --color-primario: oklch(38.7% 0.117 316.4);
+  --color-primario-oscuro: oklch(33.5% 0.102 316.7);
+  --color-primario-soft: oklch(38.7% 0.117 316.4 / 0.12);
+  --color-primario-ink: oklch(38.7% 0.117 316.4);
+  --color-sobre-primario: oklch(100% 0 0);
+  --color-paper: oklch(97.1% 0.003 286.4);
+  --color-paper-soft: oklch(98.5% 0.002 286.4);
+  --color-paper-dim: oklch(95.5% 0.004 290);
+  --color-surface: oklch(100% 0 0);
+  --color-surface-2: oklch(98.2% 0.003 290);
+  --color-surface-3: oklch(96.2% 0.005 292);
+  --color-ink: oklch(19.8% 0.013 307.7);
+  --color-ink-soft: oklch(46.7% 0.023 292.1);
+  --color-ink-faint: oklch(53.9% 0.023 294.8);
+  --color-line: oklch(89.4% 0.01 292.8);
+  --color-line-strong: oklch(58.7% 0.023 294.9);
+  --color-overlay: oklch(19.8% 0.013 307.7 / 0.45);
+  --color-positivo: oklch(42.2% 0.092 156.4);
+  --color-positivo-soft: oklch(94.6% 0.013 159.9);
+  --color-positivo-ink: oklch(42.2% 0.092 156.4);
+  --color-aviso: oklch(49.5% 0.111 64.9);
+  --color-aviso-soft: oklch(95% 0.019 75.3);
+  --color-aviso-ink: oklch(49.5% 0.111 64.9);
+  --color-peligro: oklch(57.4% 0.193 10.1);
+  --color-peligro-soft: oklch(94.8% 0.022 356.3);
+  --color-peligro-ink: oklch(51.5% 0.174 9.1);
+  --color-info: oklch(49% 0.152 262.1);
+  --color-info-soft: oklch(94.8% 0.016 262.8);
+  --color-info-ink: oklch(49% 0.152 262.1);
+  --shadow-sm: none;
+  --shadow-md: none;
+  --shadow-lg: 0 24px 60px oklch(0% 0 0 / 0.25);
+  --shadow-focus: 0 0 0 2px var(--color-paper), 0 0 0 4px var(--color-primario);
+  --dur-rapida: 150ms;
+  --dur-normal: 300ms;
+  --dur-pagina: 250ms;
+  --ease-salida: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --color-marca: oklch(33.5% 0.102 316.7);
+  --color-sobre-marca: oklch(100% 0 0);
+  --color-acento: oklch(89.2% 0.039 210.7);
+  --color-sobre-acento: oklch(19.8% 0.013 307.7);
+}
+
+.dark {
+  --color-primario: oklch(80.4% 0.079 314.3);
+  --color-primario-soft: oklch(80.4% 0.079 314.3 / 0.18);
+  --color-primario-ink: oklch(80.4% 0.079 314.3);
+  --color-sobre-primario: oklch(19.8% 0.013 307.7);
+  --color-paper: oklch(17.6% 0.008 297);
+  --color-paper-soft: oklch(19.5% 0.009 296);
+  --color-paper-dim: oklch(15.5% 0.007 297);
+  --color-surface: oklch(22.2% 0.012 293.1);
+  --color-surface-2: oklch(25.5% 0.014 293);
+  --color-surface-3: oklch(29% 0.016 294);
+  --color-ink: oklch(96.3% 0.005 297.7);
+  --color-ink-soft: oklch(81.9% 0.017 293.7);
+  --color-ink-faint: oklch(61.8% 0.036 291);
+  --color-line: oklch(32.3% 0.018 294.6);
+  --color-line-strong: oklch(61.8% 0.036 291);
+  --color-overlay: oklch(0% 0 0 / 0.6);
+  --color-positivo-soft: oklch(25% 0.029 160.3);
+  --color-positivo-ink: oklch(66.4% 0.144 156.5);
+  --color-aviso-soft: oklch(24.8% 0.025 82.5);
+  --color-aviso-ink: oklch(83.6% 0.132 86.4);
+  --color-peligro-soft: oklch(23% 0.034 0.7);
+  --color-peligro-ink: oklch(77.6% 0.137 6.5);
+  --color-info-soft: oklch(23.9% 0.031 262.6);
+  --color-info-ink: oklch(77.6% 0.102 262.7);
+  --shadow-lg: 0 24px 60px oklch(0% 0 0 / 0.55);
+}
+
+/* ==================================================================================================================================
+ * semilla:fin
+ * ================================================================================================================================ */
+
+/* Dataviz (fuera de @theme para que Tailwind no los purgue): las series salen de los tokens de arriba. */
+:root {
+  --viz-series-1: var(--color-primario);
+  --viz-series-2: var(--color-aviso);
+  --viz-series-3: var(--color-positivo);
+  --viz-series-4: var(--color-info);
+  --viz-bueno: var(--color-positivo);
+  --viz-aviso: var(--color-aviso);
+  --viz-critico: var(--color-peligro);
+  --viz-enfasis: var(--color-ink);
+  --viz-apagado: var(--color-ink-faint);
+  --viz-grilla: var(--color-line);
+  --viz-pista: var(--color-surface-3);
+  --viz-referencia: var(--color-ink-soft);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-rapida: 0ms;
+    --dur-normal: 0ms;
+    --dur-pagina: 0ms;
+  }
+}

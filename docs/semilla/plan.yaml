@@ -1,0 +1,370 @@
+esquema: plan/v1
+semilla: calesa-web v7
+agentes_disponibles: [claude]
+
+# Comandos del kit (AGENTS.md › Comandos).
+ruteo_por_defecto:
+  rojo: {agente: claude, modelo: opus, effort: xhigh, modo: plan→manual, sesion: nueva, revisor: claude-sesion-nueva}
+  normal: {agente: claude, modelo: sonnet, effort: high, modo: auto, sesion: nueva, revisor: ninguno}
+  rutina: {agente: claude, modelo: sonnet, effort: medium, modo: auto, sesion: nueva, revisor: ninguno}
+
+carriles:
+  - id: base
+    dueno_de: [package.json, pnpm-lock.yaml, next.config.ts, eslint.config.mjs, .env.example, .github/, src/app/layout.tsx, src/app/globals.css, src/app/not-found.tsx, src/app/manifest.ts, src/shared/config/, src/shared/lib/, src/shared/ui/, src/shared/CLAUDE.md, design/, public/marca/, e2e/base/]
+  - id: datos
+    dueno_de: [supabase/, src/shared/types/]
+  - id: calculadora
+    dueno_de: [src/modules/calculadora/, src/modules/planes/, src/app/(app)/panel/calculadora/, e2e/calculadora/]
+  - id: ventas
+    dueno_de: [src/modules/agenda/, src/modules/solicitudes/, src/app/agendar/, src/app/reunion/, src/app/api/solicitudes/, src/app/api/reservas/, src/app/api/horas/, src/app/(app)/panel/solicitudes/, src/app/(app)/panel/reuniones/, src/app/(app)/panel/disponibilidad/, e2e/ventas/]
+  - id: notificaciones
+    dueno_de: [src/modules/notificaciones/]
+  - id: sitio
+    dueno_de: [src/modules/sitio/, src/app/(sitio)/, src/app/sitemap.ts, src/app/robots.ts, src/app/opengraph-image.tsx, public/media/, public/ilustraciones/, e2e/sitio/]
+  - id: equipo
+    dueno_de: [src/modules/equipo/, src/modules/prospeccion/, src/app/(app)/panel/equipo/, src/app/(app)/panel/prospeccion/, e2e/equipo/]
+  - id: tareas
+    dueno_de: [vercel.json, src/modules/medicion/, src/app/api/whatsapp/, src/app/api/eventos/, src/app/api/cron/, src/app/api/webhooks/, e2e/tareas/]
+  - id: acceso
+    dueno_de: [src/modules/acceso/, src/proxy.ts, src/app/(app)/layout.tsx, src/app/(app)/_shell/, src/app/(app)/panel/page.tsx, src/app/(app)/panel/usuarios/, src/app/(app)/panel/perfil/, src/app/(app)/panel/actividad/, src/app/entrar/, e2e/acceso/]
+  - id: calidad
+    dueno_de: [e2e/flujos/, e2e/rendimiento/, e2e/accesibilidad/]
+  - id: lanzamiento
+    dueno_de: [infra/]
+
+pasos:
+  - id: P01
+    titulo: Adaptar la base del kit a Calesa (entorno, correo Resend, fuentes, tema, cabeceras, componentes, respaldos)
+    depende_de: []
+    carril: base
+    riesgo: rojo
+    modulos: [package.json, pnpm-lock.yaml, next.config.ts, eslint.config.mjs, .env.example, .github/, src/app/layout.tsx, src/app/globals.css, src/app/not-found.tsx, src/app/manifest.ts, src/shared/config/, src/shared/lib/email/, src/shared/lib/formato.ts, src/shared/ui/, src/shared/CLAUDE.md, design/, public/marca/, e2e/base/, docs/]
+    decisiones: [F1, F3, F4, F9, E1, E4, E7, E8, D5, D6, X13, X15, X16, X17]
+    ruteo: {agente: claude, modelo: opus, effort: xhigh, modo: plan→manual, sesion: nueva, revisor: claude-sesion-nueva}
+    verificacion: {nivel: 2, comando: "pnpm lint && pnpm typecheck && pnpm test && bash scripts/mapa.sh --check && pnpm db:reset && pnpm db:probar && pnpm test:e2e:completo"}
+    terminado: >-
+      Sobre lo que trae el kit: variables de §4 en src/shared/config/esquemas.ts y .env.example; adaptador
+      resend en src/shared/lib/email/adaptadores/ con enviar, programar (scheduledAt), cancelar y
+      reprogramar, probado con un fetch falso; formato de montos US$ de §5.1 en formato.ts con sus
+      ejemplos; Archivo y JetBrains Mono con next/font y next-themes en «system» con la clase .dark;
+      @vercel/analytics; CSP y cabeceras de §4 en next.config.ts; rutas admin de §9.1 en
+      DONDE_SE_PERMITE_EL_ADMIN; componentes de §8.5 en src/shared/ui con sonner para avisos; logos en
+      public/marca; respaldo-diario.yml y restauracion-semanal.yml; el e2e de humo del kit pasa.
+
+  - id: P02
+    titulo: Esquema, permisos, RLS, storage y semillas de datos
+    depende_de: [P01]
+    carril: datos
+    riesgo: rojo
+    modulos: [supabase/, src/shared/types/]
+    decisiones: [B18, B19, C1, C2, C3, F2, F5, X4, X12, X13, E6, X17]
+    decisiones_ronda4: [R4.4, R4.8, R4.12, R4.15, R4.17]
+    ruteo: {agente: claude, modelo: opus, effort: xhigh, modo: plan→manual, sesion: nueva, revisor: claude-sesion-nueva}
+    verificacion: {nivel: 2, comando: "pnpm db:reset && pnpm db:types && pnpm db:probar && pnpm lint && pnpm typecheck && pnpm test"}
+    terminado: >-
+      Una migración nueva (la base del kit no se toca) con tablas, enums, índices, la restricción de
+      exclusión y el índice único de §3; catálogo de permisos y permisos_rol de §2 con insert … on
+      conflict, tiene_permiso e ids_con_alcance; RLS, revoke y grants explícitos según la regla del kit;
+      triggers de columnas protegidas y de actualizado_en; bucket equipo con policies; seed.sql;
+      supabase/tests/rls-calesa.sql con las 47 filas de §4; tipos regenerados con pnpm db:types.
+
+  - id: P03
+    titulo: Fórmulas de calculadora y escala, y precios (entities)
+    depende_de: [P01]
+    carril: calculadora
+    riesgo: rojo
+    modulos: [src/modules/calculadora/entities/, src/modules/calculadora/CLAUDE.md, src/modules/calculadora/index.ts, src/modules/calculadora/client.ts, src/modules/planes/]
+    decisiones: [B4, B6, B7, B8, X3, A3]
+    ruteo: {agente: claude, modelo: opus, effort: xhigh, modo: plan→manual, sesion: nueva, revisor: claude-sesion-nueva}
+    verificacion: {nivel: 1, comando: "pnpm lint && pnpm typecheck && pnpm test && bash scripts/mapa.sh --check"}
+    terminado: >-
+      Módulos calculadora (entities) y planes con su ficha CLAUDE.md; funciones puras con schemas Zod;
+      tests al lado con los ejemplos 1, 2 y 3 de §5.2, los casos A-E de §5.3 y las reglas de §5.4;
+      planes expone tarjetas y tabla por pantallas/.
+
+  - id: P04
+    titulo: Reglas de agenda y de solicitudes (entities)
+    depende_de: [P01]
+    carril: ventas
+    riesgo: ambar
+    modulos: [src/modules/agenda/entities/, src/modules/agenda/CLAUDE.md, src/modules/agenda/index.ts, src/modules/solicitudes/entities/, src/modules/solicitudes/CLAUDE.md, src/modules/solicitudes/index.ts]
+    decisiones: [B10, B11, B12, X1, X2, X5, X10]
+    decisiones_ronda4: [R4.1, R4.5, R4.7, R4.9, R4.13]
+    ruteo: {agente: claude, modelo: sonnet, effort: high, modo: auto, sesion: nueva, revisor: ninguno}
+    verificacion: {nivel: 1, comando: "pnpm lint && pnpm typecheck && pnpm test && bash scripts/mapa.sh --check"}
+    terminado: >-
+      horasDisponibles y elegirAnfitrion (agenda), y transiciones de §5.7 y juntar repetidas (solicitudes)
+      como funciones puras con tests de todos los ejemplos de §5.5, §5.6 y §5.7, incluidos Bogotá,
+      Santiago con su cambio de horario y Madrid; fichas CLAUDE.md de los dos módulos.
+
+  - id: P05
+    titulo: RPC de reserva, asignación, estados, WhatsApp, configuración y retención; triggers de métricas
+    depende_de: [P02, P04]
+    carril: datos
+    riesgo: rojo
+    modulos: [supabase/, src/shared/types/]
+    decisiones: [B13, B14, B15, B17, C2, X5, X6, X10]
+    decisiones_ronda4: [R4.1, R4.2, R4.3, R4.5, R4.7, R4.9, R4.16, R4.17, R4.19, R4.21]
+    ruteo: {agente: claude, modelo: opus, effort: xhigh, modo: plan→manual, sesion: nueva, revisor: claude-sesion-nueva}
+    verificacion: {nivel: 2, comando: "pnpm db:reset && pnpm db:types && pnpm db:probar && pnpm lint && pnpm typecheck && pnpm test"}
+    terminado: >-
+      Migración nueva con las RPC de §3 y §5 (crear_o_juntar_solicitud, datos_para_horas,
+      reservar_reunion, cambiar_reunion, cancelar_reunion, cambiar_estado_solicitud, reasignar_solicitud,
+      desactivar_usuario, actualizar_meet, elegir_whatsapp, borrar_solicitud, guardar_config_calculadora,
+      registrar_evento, retencion_diaria), las de edición con p_actualizado_en_esperado y PT409; trigger
+      de la máquina de estados; triggers de metricas_diarias, metricas_persona y auditoria;
+      supabase/tests/reservas.sql, estados.sql y retencion.sql cubren doble reserva, máximo diario,
+      preferencia por el asignado, reasignación con y sin hueco, desactivación sin reemplazo, repetidas,
+      retención y borrado a pedido.
+
+  - id: P06
+    titulo: Seguridad compartida (Turnstile, límites por IP, tokens firmados, secreto del cron)
+    depende_de: [P01, P02]
+    carril: base
+    riesgo: rojo
+    modulos: [src/shared/lib/seguridad/]
+    decisiones: [C7, F5, F8]
+    ruteo: {agente: claude, modelo: opus, effort: xhigh, modo: plan→manual, sesion: nueva, revisor: claude-sesion-nueva}
+    verificacion: {nivel: 1, comando: "pnpm lint && pnpm typecheck && pnpm test && bash scripts/mapa.sh --check"}
+    terminado: >-
+      verificarTurnstile, limitar(accion, ip) sobre la RPC de limites (5/h formulario y detalle, 10/h
+      reservas, 30/h WhatsApp, 60/h eventos), firmar y verificar el token de solicitud (2 h), generar el
+      token de reunión (32 bytes, guarda sha256) y verificar el secreto del cron en tiempo constante; tests
+      de vencimiento, manipulación y límite.
+
+  - id: P07
+    titulo: Notificaciones (plantillas, enviar, programar, cancelar, registro)
+    depende_de: [P01, P02]
+    carril: notificaciones
+    riesgo: ambar
+    modulos: [src/modules/notificaciones/]
+    decisiones: [B16, B17, F4, X6, X9, D6]
+    decisiones_ronda4: [R4.11, R4.21]
+    ruteo: {agente: claude, modelo: sonnet, effort: high, modo: auto, sesion: nueva, revisor: ninguno}
+    verificacion: {nivel: 1, comando: "pnpm lint && pnpm typecheck && pnpm test && bash scripts/mapa.sh --check"}
+    terminado: >-
+      Las 12 plantillas de §6.8 con marca y modo texto; enviarAhora (2 reintentos), programar, cancelar y
+      reprogramar sobre enviarEmail() del kit, registrando cada una en correos_salientes con resend_id y
+      referencia idempotente; .ics REQUEST y CANCEL con UID y SEQUENCE; tests de render y de .ics con la
+      reunión de ejemplo; ficha CLAUDE.md.
+
+  - id: P20
+    titulo: Equipo y prospección (entities, lectura pública, sección «Quiénes somos»)
+    depende_de: [P02]
+    carril: equipo
+    riesgo: ambar
+    modulos: [src/modules/equipo/, src/modules/prospeccion/entities/, src/modules/prospeccion/CLAUDE.md, src/modules/prospeccion/index.ts]
+    decisiones: [A6, E6]
+    decisiones_ronda4: [R4.19]
+    ruteo: {agente: claude, modelo: sonnet, effort: high, modo: auto, sesion: nueva, revisor: ninguno}
+    verificacion: {nivel: 1, comando: "pnpm lint && pnpm typecheck && pnpm test && bash scripts/mapa.sh --check"}
+    terminado: >-
+      equipo expone la sección pública por pantallas/ leyendo solo filas visibles; prospeccion normaliza y
+      valida códigos (R4.19) con tests; fichas CLAUDE.md.
+
+  - id: P11
+    titulo: Flujo público de agenda (formulario con gráfica, horas, reserva, confirmación, gestión)
+    depende_de: [P03, P04, P05, P06, P07]
+    carril: ventas
+    riesgo: rojo
+    modulos: [src/modules/agenda/features/, src/modules/agenda/infra/, src/modules/agenda/pantallas/, src/modules/agenda/client.ts, src/modules/solicitudes/features/formulario/, src/modules/solicitudes/infra/, src/modules/solicitudes/pantallas/, src/modules/solicitudes/client.ts, src/app/agendar/, src/app/reunion/, src/app/api/solicitudes/, src/app/api/reservas/, src/app/api/horas/, e2e/ventas/agenda/]
+    decisiones: [A1, A4, B8, B9, B10, B11, B12, B13, B15, B16, C1, C4, C7, D1, D3, D4, X1, X5]
+    decisiones_ronda4: [R4.5, R4.10, R4.13, R4.16, R4.18, R4.19, R4.20]
+    ruteo: {agente: claude, modelo: opus, effort: xhigh, modo: plan→manual, sesion: nueva, revisor: claude-sesion-nueva}
+    verificacion: {nivel: 2, comando: "pnpm lint && pnpm typecheck && pnpm test && bash scripts/mapa.sh --check && pnpm db:reset && pnpm db:probar && pnpm test:e2e:completo"}
+    terminado: >-
+      /agendar con los 3 pasos de §6.4 (borrador en sessionStorage, prellenado desde la calculadora,
+      gráfica de calculadora por su client.ts, aviso sin-whatsapp); /api/solicitudes, /api/reservas y
+      /api/horas con Turnstile, límite, token y Zod llamando solo a sus RPC; enlace con ref limitado al
+      creador; /reunion/[token] cambia, cancela con el plazo de 2 h y ofrece «Elegir otra hora»;
+      correos enviados y recordatorios programados; e2e con reloj fijo de los recorridos 1, 2, 4 y 5 de
+      §6.1 y todos los estados de /agendar y /reunion de §6.5.
+
+  - id: P09
+    titulo: Calculadora pública, planes y tabla completa, prueba del cliente (textos con cifras)
+    depende_de: [P03, P02, P11]
+    carril: calculadora
+    riesgo: rojo
+    modulos: [src/modules/calculadora/features/publica/, src/modules/calculadora/infra/, src/modules/calculadora/pantallas/, src/modules/planes/, e2e/calculadora/publica.spec.ts, e2e/calculadora/planes.spec.ts]
+    decisiones: [A2, B4, B5, B6, B7, X3, X11]
+    decisiones_ronda4: [R4.18]
+    ruteo: {agente: claude, modelo: opus, effort: xhigh, modo: plan→manual, sesion: nueva, revisor: claude-sesion-nueva}
+    verificacion: {nivel: 1, comando: "pnpm lint && pnpm typecheck && pnpm test && bash scripts/mapa.sh --check && pnpm test:e2e e2e/calculadora/"}
+    terminado: >-
+      Pantallas de calculadora (5 datos, rango, desglose, horas, «Cómo se calculó» leyendo
+      config_calculadora, evento calesa:evento al primer resultado, detalle por correo vía
+      /api/solicitudes) y de planes (tarjetas con cuota al frente y selector anual; tabla completa de §6.3
+      con los dos textos de pie, sin la regla de exceso de autos); bloque de prueba con el texto exacto de
+      A0.2; e2e reproduce el ejemplo 1 (US$ 4.452 y US$ 8.935).
+
+  - id: P08
+    titulo: Sitio público (inicio con sus 10 secciones, /planes, navegación, maquetas, ilustraciones)
+    depende_de: [P09, P20]
+    carril: sitio
+    riesgo: ambar
+    modulos: [src/modules/sitio/, src/app/(sitio)/layout.tsx, src/app/(sitio)/page.tsx, src/app/(sitio)/planes/, public/media/, public/ilustraciones/, e2e/sitio/inicio.spec.ts]
+    decisiones: [B1, B2, B3, D2, D4, E2, E3, E5, E7, G3, X8]
+    ruteo: {agente: claude, modelo: sonnet, effort: high, modo: auto, sesion: nueva, revisor: ninguno}
+    verificacion: {nivel: 1, comando: "pnpm lint && pnpm typecheck && pnpm test && bash scripts/mapa.sh --check && pnpm test:e2e e2e/sitio/"}
+    terminado: >-
+      Inicio con las 10 secciones en orden, componiendo las pantallas de planes, calculadora y equipo;
+      maquetas con el auto ficticio y el rótulo de datos ficticios; video con póster y pausa;
+      ilustraciones SVG; navegación con hoja inferior en celular y transiciones de vista; botones de
+      agendar con data-evento; e2e con capturas en escritorio y movil, claro y oscuro, y con movimiento
+      reducido.
+
+  - id: P10
+    titulo: Privacidad, términos (borrador) y pie legal
+    depende_de: [P08]
+    carril: sitio
+    riesgo: rojo
+    modulos: [src/app/(sitio)/privacidad/, src/app/(sitio)/terminos/, src/modules/sitio/legal/, e2e/sitio/legal.spec.ts]
+    decisiones: [C1, C2, C3, C4, C5, C6]
+    ruteo: {agente: claude, modelo: opus, effort: xhigh, modo: plan→manual, sesion: nueva, revisor: claude-sesion-nueva}
+    verificacion: {nivel: 1, comando: "pnpm lint && pnpm typecheck && pnpm test && bash scripts/mapa.sh --check && pnpm test:e2e e2e/sitio/legal.spec.ts"}
+    terminado: >-
+      Borradores con los títulos de §6.7, franja «Borrador: revisar con abogado» fuera de producción,
+      pie con responsable, Santa Cruz de la Sierra, Bolivia, y correo de privacidad; el build de
+      producción falla si LEGAL_APROBADO no es «si».
+
+  - id: P12
+    titulo: Medición, botón de WhatsApp por turno y registro de eventos
+    depende_de: [P05, P06]
+    carril: tareas
+    riesgo: ambar
+    modulos: [src/modules/medicion/, src/app/api/whatsapp/, src/app/api/eventos/, e2e/tareas/whatsapp.spec.ts]
+    decisiones: [D3, F8, X7]
+    decisiones_ronda4: [R4.10]
+    ruteo: {agente: claude, modelo: sonnet, effort: high, modo: auto, sesion: nueva, revisor: ninguno}
+    verificacion: {nivel: 1, comando: "pnpm lint && pnpm typecheck && pnpm test && bash scripts/mapa.sh --check && pnpm test:e2e e2e/tareas/whatsapp.spec.ts"}
+    terminado: >-
+      Módulo medicion (eventos, embudo desde metricas_diarias y metricas_persona, cupos, latidos) con
+      ficha; GET /api/whatsapp llama a elegir_whatsapp, registra clic_whatsapp sin datos personales y
+      redirige a wa.me con el mensaje de D3 o a /agendar?aviso=sin-whatsapp; POST /api/eventos acepta solo
+      clic_agendar y calculadora_usada; e2e del ejemplo V1 7 clics / V2 3 clics → V2.
+
+  - id: P13
+    titulo: Tarea diaria (retención, reintentos, limpieza, cupos) y webhook de Resend
+    depende_de: [P05, P06, P07, P12]
+    carril: tareas
+    riesgo: rojo
+    modulos: [vercel.json, src/app/api/cron/, src/app/api/webhooks/, e2e/tareas/diario.spec.ts]
+    decisiones: [B16, B17, C2, F10, X5, X6, G1]
+    ruteo: {agente: claude, modelo: opus, effort: xhigh, modo: plan→manual, sesion: nueva, revisor: claude-sesion-nueva}
+    verificacion: {nivel: 2, comando: "pnpm lint && pnpm typecheck && pnpm test && bash scripts/mapa.sh --check && pnpm db:reset && pnpm db:probar && pnpm test:e2e:completo"}
+    terminado: >-
+      /api/cron/diario (CRON_SECRET) llama a retencion_diaria, reintenta fallidos, limpia, mide cupos
+      (R5.2) y escribe latidos; vercel.json con ese único cron; /api/webhooks/resend verifica la firma y
+      marca rebotes y fallos (R5.3); e2e con reloj fijo prueban retención, reintento, aviso de cupos y
+      banner de tarea detenida.
+
+  - id: P14
+    titulo: Acceso al panel (entrar, permisos, invitaciones, usuarios, perfil, marco, resumen, actividad)
+    depende_de: [P02, P05, P06, P07, P12]
+    carril: acceso
+    riesgo: rojo
+    modulos: [src/modules/acceso/, src/proxy.ts, src/app/(app)/layout.tsx, src/app/(app)/_shell/, src/app/(app)/panel/page.tsx, src/app/(app)/panel/usuarios/, src/app/(app)/panel/perfil/, src/app/(app)/panel/actividad/, src/app/entrar/, e2e/acceso/]
+    decisiones: [B19, F5, X9, X12, X14, D4]
+    decisiones_ronda4: [R4.3, R4.4, R4.14, R4.21]
+    ruteo: {agente: claude, modelo: opus, effort: xhigh, modo: plan→manual, sesion: nueva, revisor: claude-sesion-nueva}
+    verificacion: {nivel: 2, comando: "pnpm lint && pnpm typecheck && pnpm test && bash scripts/mapa.sh --check && pnpm db:reset && pnpm db:probar && pnpm test:e2e:completo"}
+    terminado: >-
+      /entrar con enlace mágico (shouldCreateUser false, mensaje neutro); puede() con el catálogo de §2;
+      proxy.ts protege /panel; marco del panel por rol; invitar con nombre y correo (auth.admin desde una
+      función que primero comprueba el permiso; el rol por RPC), reenviar, revocar, en turno y desactivar
+      (R4.3); perfil con WhatsApp y Meet y actualizar_meet; resumen con el embudo de medicion (equipo o
+      propio, R4.4); actividad con auditoría y correos fallidos; script pnpm admin:crear; recorrido 7 de
+      §6.1 en e2e; un usuario inactivo ve el acceso pausado.
+
+  - id: P15
+    titulo: Panel de ventas (solicitudes, notas, reuniones, disponibilidad y bloqueos)
+    depende_de: [P14, P11]
+    carril: ventas
+    riesgo: ambar
+    modulos: [src/modules/solicitudes/features/panel/, src/modules/agenda/features/panel/, src/app/(app)/panel/solicitudes/, src/app/(app)/panel/reuniones/, src/app/(app)/panel/disponibilidad/, e2e/ventas/panel/]
+    decisiones: [A3, B18, B11, B12, B14, X4, D1, D4]
+    decisiones_ronda4: [R4.1, R4.2, R4.4]
+    ruteo: {agente: claude, modelo: sonnet, effort: high, modo: auto, sesion: nueva, revisor: ninguno}
+    verificacion: {nivel: 1, comando: "pnpm lint && pnpm typecheck && pnpm test && bash scripts/mapa.sh --check && pnpm test:e2e e2e/ventas/panel/"}
+    terminado: >-
+      Listas por cursor con el tamaño de paginacion.ts del kit y el tope de lo cargado; detalle con
+      estados de §5.7, notas e historial, reasignar (R4.2) y borrar (admin); reuniones con marcar,
+      reagendar solo en sus horas y cancelar (R4.1); disponibilidad con bloqueos propios (vendedor) y de
+      todos más horario común y reglas (admin); recorrido 6 de §6.1 para vendedor y admin; un vendedor no
+      ve lo ajeno.
+
+  - id: P16
+    titulo: Panel de equipo y prospección
+    depende_de: [P14, P20]
+    carril: equipo
+    riesgo: rojo
+    modulos: [src/modules/prospeccion/features/, src/modules/prospeccion/infra/, src/modules/prospeccion/pantallas/, src/app/(app)/panel/equipo/, src/app/(app)/panel/prospeccion/, e2e/equipo/]
+    decisiones: [E6, A4]
+    decisiones_ronda4: [R4.19]
+    ruteo: {agente: claude, modelo: opus, effort: xhigh, modo: plan→manual, sesion: nueva, revisor: claude-sesion-nueva}
+    verificacion: {nivel: 1, comando: "pnpm lint && pnpm typecheck && pnpm test && bash scripts/mapa.sh --check && pnpm test:e2e e2e/equipo/"}
+    terminado: >-
+      Equipo con foto comprimida en el navegador y subida por hash (R5.1, regla del kit), orden, ocultar
+      y borrar (admin) y revalidación de la portada; enlaces de prospección con código escrito por el
+      usuario, en mayúsculas y único; e2e de cada pantalla con sus estados y el rechazo a un vendedor en
+      equipo.
+
+  - id: P21
+    titulo: Panel de datos de la calculadora
+    depende_de: [P14, P09]
+    carril: calculadora
+    riesgo: rojo
+    modulos: [src/modules/calculadora/features/panel/, src/app/(app)/panel/calculadora/, e2e/calculadora/panel.spec.ts]
+    decisiones: [B4, X3]
+    ruteo: {agente: claude, modelo: opus, effort: xhigh, modo: plan→manual, sesion: nueva, revisor: claude-sesion-nueva}
+    verificacion: {nivel: 1, comando: "pnpm lint && pnpm typecheck && pnpm test && bash scripts/mapa.sh --check && pnpm test:e2e e2e/calculadora/panel.spec.ts"}
+    terminado: >-
+      Los 9 datos de config_calculadora con ayuda y el ejemplo 1 recalculado en vivo; guardar por la RPC
+      guardar_config_calculadora con p_actualizado_en_esperado; revalidación de la portada; e2e del admin y
+      del rechazo a un vendedor.
+
+  - id: P17
+    titulo: SEO, imagen para compartir, sitemap, datos estructurados y oyente de eventos
+    depende_de: [P10, P12]
+    carril: sitio
+    riesgo: verde
+    modulos: [src/app/sitemap.ts, src/app/robots.ts, src/app/opengraph-image.tsx, src/app/(sitio)/layout.tsx, src/modules/sitio/seo/, e2e/sitio/seo.spec.ts]
+    decisiones: [F7, C6, F8]
+    ruteo: {agente: claude, modelo: sonnet, effort: medium, modo: auto, sesion: nueva, revisor: ninguno}
+    verificacion: {nivel: 1, comando: "pnpm lint && pnpm typecheck && pnpm test && bash scripts/mapa.sh --check && pnpm test:e2e e2e/sitio/seo.spec.ts"}
+    terminado: >-
+      Títulos y descripciones por página, imagen OG con marca, sitemap y robots (panel, entrar y reunion
+      excluidos), JSON-LD Organization y FAQPage, y un oyente en el layout del sitio que envía a
+      /api/eventos los data-evento y calesa:evento; e2e valida etiquetas, JSON-LD y que un clic en «Agendar
+      demo» queda guardado.
+
+  - id: P18
+    titulo: Calidad completa (flujos de punta a punta, accesibilidad, rendimiento con volumen)
+    depende_de: [P13, P15, P16, P17, P21]
+    carril: calidad
+    riesgo: ambar
+    modulos: [e2e/flujos/, e2e/rendimiento/, e2e/accesibilidad/]
+    decisiones: [D5, D2, G1]
+    ruteo: {agente: claude, modelo: sonnet, effort: high, modo: auto, sesion: nueva, revisor: ninguno}
+    verificacion: {nivel: 3, comando: "pnpm lint && pnpm typecheck && pnpm test && bash scripts/mapa.sh --check && pnpm db:reset && pnpm db:probar && pnpm test:e2e:completo"}
+    terminado: >-
+      Los 7 recorridos de §6.1 de punta a punta; axe sin violaciones en todas las rutas en claro y
+      oscuro; volumen de §7 cargado y cada lista bajo 300 ms; Lighthouse móvil ≥ 90 en rendimiento y
+      100 en accesibilidad en / y /planes; presupuestos de §7 cumplidos; capturas guardadas.
+
+  - id: P19
+    titulo: Lanzamiento (Supabase, Resend y DNS, variables, respaldos, legal aprobado, despliegue)
+    depende_de: [P18]
+    carril: lanzamiento
+    riesgo: rojo
+    modulos: [infra/, docs/]
+    decisiones: [F4, F6, F9, C5, G2, X13, X14]
+    ruteo: {agente: claude, modelo: opus, effort: xhigh, modo: plan→manual, sesion: nueva, revisor: claude-sesion-nueva}
+    verificacion: {nivel: 3, comando: "pnpm lint && pnpm typecheck && pnpm test && pnpm db:probar && pnpm test:e2e:completo && pnpm env:check"}
+    terminado: >-
+      infra/lanzamiento.md completado con: proyecto Supabase (gratis) creado y migrado, Vercel Pro con el
+      cron diario activo, secretos de respaldo en GitHub y primer respaldo y restauración en verde,
+      webhook de Resend configurado, Resend con getcalesa.com verificado y SMTP de Auth configurado,
+      variables en Vercel, ADMIN_EMAIL (alpiryk@gmail.com) cargado y cuenta del admin creada con pnpm
+      admin:crear, aprobación del abogado registrada (LEGAL_APROBADO=si), calesa.app apuntando a Vercel;
+      prueba de humo en producción reserva y cancela una reunión de prueba y recibe los correos.
