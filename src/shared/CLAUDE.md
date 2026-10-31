@@ -16,7 +16,8 @@ Infraestructura transversal sin reglas de negocio: clientes de Supabase, errores
 - `lib/paginacion.ts` — el tamaño de toda página sale de acá (`TAMANOS_DE_PAGINA`, `tamanoDePagina()`, `TAMANO_DE_VER_MAS`, `TOPE_DE_LO_CARGADO`); keyset `leerCursor()`, `codificarCursor()`, `armarPagina()`.
 - `lib/conteo.ts` — un número que se muestra nunca es un total exacto: `conteoAcotado()`, `cantidadAcotada()`, `cortarAlTope()`, `textoDelTope()`.
 - `lib/email/` — `enviarEmail()`: la única puerta del correo; un adaptador REST por proveedor (`EMAIL_PROVEEDOR`; hoy `mailpit`).
-- `config/esquemas.ts` — el entorno en Zod (puro): públicas, servidor y demo; lo usan `entorno.ts`, `servidor.ts`, `next.config.ts` y `pnpm env:check`. `config/app.ts`: nombre, descripción y las copias de los colores.
+- `config/esquemas.ts` — el entorno en Zod (puro): públicas, servidor y demo; lo usan `entorno.ts`, `servidor.ts`, `next.config.ts` y `pnpm env:check`. Las de Calesa (semilla §4) son obligatorias sólo con `VERCEL_ENV=preview|production`; fuera de Vercel sólo se revisa su formato. `config/app.ts`: nombre, descripción y las copias de los colores.
+- `config/entorno.ts` — `entornoPublico()` y `urlDelSitio(respaldo?)`: la URL del sitio para enlaces absolutos. Nadie lee `NEXT_PUBLIC_SITIO_URL` directo; en Vercel nunca usa el respaldo (el Host del pedido).
 - `ui/diferido.tsx` — `diferido()`: el único lugar que carga código diferido (el lint prohíbe `next/dynamic`).
 - `ui/button.tsx`, `ui/aviso.tsx` — lo mínimo que usan `diferido()` y `not-found`; los de shadcn los reemplazan con la misma API.
 - `types/database.types.ts` — generado por `pnpm db:types`. No se edita.
