@@ -68,7 +68,7 @@ describe('el entorno: el servidor', () => {
   it('un proveedor sin adaptador lo dice en vez de fallar al primer correo', () => {
     const p = problemasDe(esquemaDelServidor, {
       ...base,
-      EMAIL_PROVEEDOR: 'resend',
+      EMAIL_PROVEEDOR: 'cloudflare',
       EMAIL_REMITENTE: 'a@b.co',
       EMAIL_REMITENTE_NOMBRE: 'X',
     })
@@ -76,10 +76,162 @@ describe('el entorno: el servidor', () => {
     expect(p[0]?.motivo).toContain('todavía no tiene adaptador')
   })
 
+  it('resend pide su clave en cualquier entorno', () => {
+    const conResend = {
+      ...base,
+      EMAIL_PROVEEDOR: 'resend',
+      EMAIL_REMITENTE: 'hola@getcalesa.com',
+      EMAIL_REMITENTE_NOMBRE: 'Calesa',
+    }
+    expect(problemasDe(esquemaDelServidor, conResend)).toEqual([
+      { variable: 'RESEND_API_KEY', motivo: 'falta (EMAIL_PROVEEDOR=resend)' },
+    ])
+    expect(problemasDe(esquemaDelServidor, { ...conResend, RESEND_API_KEY: 're_x' })).toEqual([])
+  })
+
   it('un proveedor que no existe se nombra con los que hay', () => {
     expect(
       problemasDe(esquemaDelServidor, { ...base, EMAIL_PROVEEDOR: 'sendgrid' })[0]?.motivo,
     ).toContain('mailpit')
+  })
+})
+
+// Las de Calesa (semilla §4). Sin Vercel no se exige nada nuevo: local, carriles, CI y e2e siguen con las tres del kit.
+const publicas = {
+  NEXT_PUBLIC_SUPABASE_URL: 'https://abc.supabase.co',
+  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_x',
+  NEXT_PUBLIC_TURNSTILE_SITE_KEY: '1x00000000000000000000AA',
+  NEXT_PUBLIC_SITIO_URL: 'https://calesa.app',
+}
+const secreto = 'a'.repeat(32)
+const delServidor = {
+  SUPABASE_SECRET_KEY: 'sb_secret_x',
+  EMAIL_PROVEEDOR: 'resend',
+  EMAIL_REMITENTE: 'hola@getcalesa.com',
+  EMAIL_REMITENTE_NOMBRE: 'Calesa',
+  RESEND_API_KEY: 're_prueba',
+  TURNSTILE_SECRET_KEY: '1x0000000000000000000000000000000AA',
+  CRON_SECRET: secreto,
+  RESEND_WEBHOOK_SECRET: 'whsec_prueba',
+  TOKEN_FIRMA_SECRETO: secreto,
+  IP_SAL_SECRETO: secreto,
+  ADMIN_EMAIL: 'admin@ejemplo.com',
+}
+const faltaEnVercel = (entorno: string, variables: string[]) =>
+  variables.map((variable) => ({ variable, motivo: `falta (en Vercel ${entorno})` }))
+
+describe('el entorno: lo que exige Vercel', () => {
+  it('con VERCEL_ENV y nada más, nombra en una sola vuelta lo del kit y cada una de §4', () => {
+    for (const entorno of ['production', 'preview']) {
+      expect(problemasDe(esquemaPublico, { VERCEL_ENV: entorno })).toEqual([
+        { variable: 'NEXT_PUBLIC_SUPABASE_URL', motivo: 'falta' },
+        { variable: 'NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY', motivo: 'falta' },
+        ...faltaEnVercel(entorno, ['NEXT_PUBLIC_TURNSTILE_SITE_KEY', 'NEXT_PUBLIC_SITIO_URL']),
+      ])
+      expect(problemasDe(esquemaDelServidor, { VERCEL_ENV: entorno })).toEqual([
+        { variable: 'SUPABASE_SECRET_KEY', motivo: 'falta' },
+        ...faltaEnVercel(entorno, [
+          'RESEND_API_KEY',
+          'TURNSTILE_SECRET_KEY',
+          'CRON_SECRET',
+          'RESEND_WEBHOOK_SECRET',
+          'TOKEN_FIRMA_SECRETO',
+          'IP_SAL_SECRETO',
+          'ADMIN_EMAIL',
+          'EMAIL_REMITENTE',
+          'EMAIL_REMITENTE_NOMBRE',
+        ]),
+        { variable: 'EMAIL_PROVEEDOR', motivo: 'en Vercel es resend' },
+      ])
+    }
+  })
+
+  it('un valor sólo de espacios falta, y cada variable se nombra una sola vez', () => {
+    expect(
+      problemasDe(esquemaPublico, {
+        ...publicas,
+        NEXT_PUBLIC_TURNSTILE_SITE_KEY: '  ',
+        VERCEL_ENV: 'production',
+      }),
+    ).toEqual([{ variable: 'NEXT_PUBLIC_TURNSTILE_SITE_KEY', motivo: 'falta' }])
+  })
+
+  it('completo en Vercel no tiene problemas; en producción la URL del sitio es https', () => {
+    expect(problemasDe(esquemaPublico, { ...publicas, VERCEL_ENV: 'production' })).toEqual([])
+    expect(problemasDe(esquemaDelServidor, { ...delServidor, VERCEL_ENV: 'production' })).toEqual(
+      [],
+    )
+    expect(
+      problemasDe(esquemaPublico, {
+        ...publicas,
+        NEXT_PUBLIC_SITIO_URL: 'http://calesa.app',
+        VERCEL_ENV: 'production',
+      }),
+    ).toEqual([{ variable: 'NEXT_PUBLIC_SITIO_URL', motivo: 'en producción es https' }])
+  })
+
+  it('en Vercel el correo sale por resend', () => {
+    for (const EMAIL_PROVEEDOR of ['mailpit', 'ninguno'])
+      expect(
+        problemasDe(esquemaDelServidor, {
+          ...delServidor,
+          EMAIL_PROVEEDOR,
+          MAILPIT_URL: 'http://127.0.0.1:55324',
+          VERCEL_ENV: 'preview',
+        }),
+      ).toEqual([{ variable: 'EMAIL_PROVEEDOR', motivo: 'en Vercel es resend' }])
+  })
+
+  it('sin VERCEL_ENV, o con development, bastan las tres del kit', () => {
+    const kit = {
+      NEXT_PUBLIC_SUPABASE_URL: 'http://127.0.0.1:55321',
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: 'p',
+      SUPABASE_SECRET_KEY: 's',
+    }
+    for (const extra of [{}, { VERCEL_ENV: 'development' }]) {
+      expect(problemasDe(esquemaPublico, { ...kit, ...extra })).toEqual([])
+      expect(problemasDe(esquemaDelServidor, { ...kit, ...extra })).toEqual([])
+    }
+  })
+
+  it('los correos de avisos y de privacidad tienen su valor de F4', () => {
+    const e = esquemaDelServidor.parse({ SUPABASE_SECRET_KEY: 's' })
+    expect(e.EMAIL_AVISOS).toBe('equipo@getcalesa.com')
+    expect(e.EMAIL_PRIVACIDAD).toBe('privacidad@getcalesa.com')
+  })
+})
+
+describe('el entorno: los formatos de §4', () => {
+  it('un formato malo se nombra con su motivo y nunca con su valor', () => {
+    const malos = {
+      SUPABASE_SECRET_KEY: 's',
+      RESEND_API_KEY: 'sk_secreto_resend',
+      RESEND_WEBHOOK_SECRET: 'secreto_del_webhook',
+      CRON_SECRET: 'secreto-corto-del-cron',
+      TOKEN_FIRMA_SECRETO: 'secreto-corto-de-firma',
+      IP_SAL_SECRETO: 'secreto-corto-de-sal',
+      ADMIN_EMAIL: 'admin-sin-arroba',
+      EMAIL_AVISOS: 'avisos-sin-arroba',
+      EMAIL_PRIVACIDAD: 'privacidad-sin-arroba',
+      LEGAL_APROBADO: 'quizas-luego',
+      VERCEL_ENV: 'ensayo-general',
+    }
+    const p = problemasDe(esquemaDelServidor, malos)
+    expect(p).toEqual([
+      { variable: 'RESEND_API_KEY', motivo: 'empieza con re_' },
+      { variable: 'CRON_SECRET', motivo: 'al menos 32 caracteres' },
+      { variable: 'RESEND_WEBHOOK_SECRET', motivo: 'empieza con whsec_' },
+      { variable: 'TOKEN_FIRMA_SECRETO', motivo: 'al menos 32 caracteres' },
+      { variable: 'IP_SAL_SECRETO', motivo: 'al menos 32 caracteres' },
+      { variable: 'ADMIN_EMAIL', motivo: 'no es un correo' },
+      { variable: 'EMAIL_AVISOS', motivo: 'no es un correo' },
+      { variable: 'EMAIL_PRIVACIDAD', motivo: 'no es un correo' },
+      { variable: 'LEGAL_APROBADO', motivo: 'es si o no' },
+      { variable: 'VERCEL_ENV', motivo: 'es uno de production, preview, development' },
+    ])
+    const texto = JSON.stringify(p)
+    for (const valor of Object.values(malos).filter((v) => v.length > 1))
+      expect(texto).not.toContain(valor)
   })
 })
 

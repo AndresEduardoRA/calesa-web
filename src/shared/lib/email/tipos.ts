@@ -13,7 +13,18 @@ export const esquemaDeMensaje = z.object({
   etiquetas: z
     .record(z.string().regex(/^[a-z0-9_-]{1,40}$/), z.string().regex(/^[a-zA-Z0-9_.-]{1,80}$/))
     .optional(),
+  // La clave de idempotencia (`recordatorio24:<reunion>`): el proveedor no manda dos veces el mismo correo con la misma
+  // referencia. Una referencia por cuerpo: el mismo con otro cuerpo es un `conflicto`. Mailpit la ignora.
+  referencia: z
+    .string()
+    .regex(/^[A-Za-z0-9_:.-]{1,256}$/)
+    .optional(),
 })
+
+// Cuándo sale un correo programado: ISO 8601 con zona (`2026-11-05T14:00:00-04:00`), nunca una hora sin zona.
+export const esquemaDeCuando = z.iso.datetime({ offset: true })
+// El id que devolvió el proveedor al programarlo (Resend: un UUID).
+export const esquemaDeIdDeEmail = z.guid()
 
 export type MensajeDeEmail = z.infer<typeof esquemaDeMensaje>
 export type Remitente = { email: string; nombre: string }

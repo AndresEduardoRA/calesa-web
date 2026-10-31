@@ -8,18 +8,94 @@ const texto = z.string().trim().min(1, { error: 'falta' })
 const url = z.url({ error: 'no es una URL' })
 const opcional = <T extends z.ZodType>(esquema: T) =>
   z.preprocess((v) => (v === '' ? undefined : v), esquema.optional())
+const conValor = (esquema: z.ZodType<string>, porDefecto: string) =>
+  z.preprocess((v) => (v === '' ? undefined : v), esquema.default(porDefecto))
+const correo = z.email({ error: 'no es un correo' })
+const secreto = z.string().trim().min(32, { error: 'al menos 32 caracteres' })
+const conPrefijo = (prefijo: string) =>
+  z
+    .string()
+    .trim()
+    .startsWith(prefijo, { error: `empieza con ${prefijo}` })
+
+// Lo que una vista previa o producción no puede no tener (semilla §4). Ahí, lo que falte → `falta (en Vercel <entorno>)`.
+const PUBLICAS_EN_VERCEL = ['NEXT_PUBLIC_TURNSTILE_SITE_KEY', 'NEXT_PUBLIC_SITIO_URL'] as const
+const DEL_SERVIDOR_EN_VERCEL = [
+  'RESEND_API_KEY',
+  'TURNSTILE_SECRET_KEY',
+  'CRON_SECRET',
+  'RESEND_WEBHOOK_SECRET',
+  'TOKEN_FIRMA_SECRETO',
+  'IP_SAL_SECRETO',
+  'ADMIN_EMAIL',
+  // El kit los pide con un proveedor, pero su regla no corre si el objeto ya falló: aquí salen en la misma vuelta.
+  'EMAIL_REMITENTE',
+  'EMAIL_REMITENTE_NOMBRE',
+] as const
+
+// Va con `{ when: () => true }`: sin él, Zod 4 la salta si el objeto ya falló, y una vuelta de `env:check` nombraría sólo lo del
+// kit. Por eso lee cada valor como `unknown`: le puede llegar un objeto a medio validar.
+function exigirEnVercel(variables: readonly string[]) {
+  return (e: Record<string, unknown>, ctx: z.RefinementCtx) => {
+    const despliegue = e['VERCEL_ENV']
+    if (despliegue !== 'production' && despliegue !== 'preview') return
+    for (const variable of variables) {
+      const valor = e[variable]
+      if (typeof valor === 'string' && valor.trim() !== '') continue
+      ctx.addIssue({ code: 'custom', path: [variable], message: `falta (en Vercel ${despliegue})` })
+    }
+  }
+}
+
+// En producción la URL del sitio es https (los enlaces de los correos y el `metadataBase` salen de ella).
+function sitioConHttps(e: Record<string, unknown>, ctx: z.RefinementCtx) {
+  const sitio = e['NEXT_PUBLIC_SITIO_URL']
+  if (e['VERCEL_ENV'] !== 'production' || typeof sitio !== 'string') return
+  if (!sitio.startsWith('https://'))
+    ctx.addIssue({
+      code: 'custom',
+      path: ['NEXT_PUBLIC_SITIO_URL'],
+      message: 'en producción es https',
+    })
+}
+
+// En una vista previa o en producción el correo sale por Resend (semilla §4): con mailpit o ninguno no saldría nada.
+function correoPorResend(e: Record<string, unknown>, ctx: z.RefinementCtx) {
+  const despliegue = e['VERCEL_ENV']
+  if (despliegue !== 'production' && despliegue !== 'preview') return
+  if (e['EMAIL_PROVEEDOR'] !== 'resend')
+    ctx.addIssue({ code: 'custom', path: ['EMAIL_PROVEEDOR'], message: 'en Vercel es resend' })
+}
 
 export const PROVEEDORES_DE_EMAIL = ['ninguno', 'mailpit', 'resend', 'cloudflare'] as const
 export type ProveedorDeEmail = (typeof PROVEEDORES_DE_EMAIL)[number]
 
 // Los proveedores con adaptador en `src/shared/lib/email/adaptadores/`. Los demás se nombran para decirlo antes del primer correo.
-export const PROVEEDORES_CON_ADAPTADOR: readonly ProveedorDeEmail[] = ['ninguno', 'mailpit']
+export const PROVEEDORES_CON_ADAPTADOR: readonly ProveedorDeEmail[] = [
+  'ninguno',
+  'mailpit',
+  'resend',
+]
+
+// Lo pone Vercel en cada despliegue. Sin ella (local, carriles, CI, e2e) no se exige nada de lo que pide sólo Vercel.
+export const ENTORNOS_DE_VERCEL = ['production', 'preview', 'development'] as const
+const entornoDeVercel = opcional(
+  z.enum(ENTORNOS_DE_VERCEL, { error: `es uno de ${ENTORNOS_DE_VERCEL.join(', ')}` }),
+)
 
 // Viajan al navegador: el nombre literal `NEXT_PUBLIC_*` (Next sólo incrusta las que se escriben así).
-export const esquemaPublico = z.object({
-  NEXT_PUBLIC_SUPABASE_URL: url,
-  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: texto,
-})
+export const esquemaPublico = z
+  .object({
+    NEXT_PUBLIC_SUPABASE_URL: url,
+    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: texto,
+    NEXT_PUBLIC_TURNSTILE_SITE_KEY: opcional(texto),
+    // Nadie la lee directo: se pide con `urlDelSitio()` de `entorno.ts`.
+    NEXT_PUBLIC_SITIO_URL: opcional(url),
+    // En el navegador queda `undefined` (no es `NEXT_PUBLIC_*`), y ahí no exige nada.
+    VERCEL_ENV: entornoDeVercel,
+  })
+  .superRefine(exigirEnVercel(PUBLICAS_EN_VERCEL), { when: () => true })
+  .superRefine(sitioConHttps, { when: () => true })
 
 // Sólo servidor.
 export const esquemaDelServidor = z
@@ -31,6 +107,19 @@ export const esquemaDelServidor = z
     EMAIL_REMITENTE: opcional(z.email({ error: 'no es un correo' })),
     EMAIL_REMITENTE_NOMBRE: opcional(texto),
     MAILPIT_URL: opcional(url),
+    // Las de Calesa (semilla §4): obligatorias sólo en Vercel (abajo); fuera de Vercel sólo se revisa su formato.
+    RESEND_API_KEY: opcional(conPrefijo('re_')),
+    TURNSTILE_SECRET_KEY: opcional(texto),
+    CRON_SECRET: opcional(secreto),
+    RESEND_WEBHOOK_SECRET: opcional(conPrefijo('whsec_')),
+    TOKEN_FIRMA_SECRETO: opcional(secreto),
+    IP_SAL_SECRETO: opcional(secreto),
+    ADMIN_EMAIL: opcional(correo),
+    EMAIL_AVISOS: conValor(correo, 'equipo@getcalesa.com'),
+    EMAIL_PRIVACIDAD: conValor(correo, 'privacidad@getcalesa.com'),
+    // La exige el build de producción (paso P10); aquí sólo se declara.
+    LEGAL_APROBADO: opcional(z.enum(['si', 'no'], { error: 'es si o no' })),
+    VERCEL_ENV: entornoDeVercel,
   })
   .superRefine((e, ctx) => {
     if (e.EMAIL_PROVEEDOR === 'ninguno') return
@@ -49,6 +138,13 @@ export const esquemaDelServidor = z
         message: 'falta (EMAIL_PROVEEDOR=mailpit)',
       })
     }
+    if (e.EMAIL_PROVEEDOR === 'resend' && !e.RESEND_API_KEY) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['RESEND_API_KEY'],
+        message: 'falta (EMAIL_PROVEEDOR=resend)',
+      })
+    }
     if (!PROVEEDORES_CON_ADAPTADOR.includes(e.EMAIL_PROVEEDOR)) {
       ctx.addIssue({
         code: 'custom',
@@ -57,6 +153,8 @@ export const esquemaDelServidor = z
       })
     }
   })
+  .superRefine(exigirEnVercel(DEL_SERVIDOR_EN_VERCEL), { when: () => true })
+  .superRefine(correoPorResend, { when: () => true })
 
 // `.env.demo`: lo que leen los scripts de la demo (un proyecto de Supabase en la nube, sin datos reales). Nunca lo lee la app.
 export const esquemaDeLaDemo = z.object({
@@ -80,17 +178,26 @@ export const esquemaDeLaDemo = z.object({
 
 export type Problema = { variable: string; motivo: string }
 
-// Lo que falta o está mal en `entorno` según `esquema`, sin los valores (nunca se imprime un valor).
+// Lo que falta o está mal en `entorno` según `esquema`, sin los valores (nunca se imprime un valor). Una variable, un motivo: el
+// primero (la regla de Vercel puede repetir una que su formato ya rechazó).
 export function problemasDe(
   esquema: z.ZodType,
   entorno: Record<string, string | undefined>,
 ): Problema[] {
   const r = esquema.safeParse(entorno)
   if (r.success) return []
-  return r.error.issues.map((i) => ({
-    variable: i.path.map(String).join('.') || '(entorno)',
-    motivo: i.code === 'invalid_type' && i.input === undefined ? 'falta' : i.message,
-  }))
+  const vistas = new Set<string>()
+  return r.error.issues.flatMap((i) => {
+    const variable = i.path.map(String).join('.') || '(entorno)'
+    if (vistas.has(variable)) return []
+    vistas.add(variable)
+    return [
+      {
+        variable,
+        motivo: i.code === 'invalid_type' && i.input === undefined ? 'falta' : i.message,
+      },
+    ]
+  })
 }
 
 // Si `next.config.ts` valida las públicas: sólo en `next build`. `next typegen` (el `pnpm typecheck`) carga la configuración con la

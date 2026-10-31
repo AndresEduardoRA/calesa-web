@@ -4,6 +4,8 @@ import {
   formatearNumero,
   formatearParaEditar,
   formatearPorcentaje,
+  formatoRango,
+  formatoUSD,
 } from './formato'
 
 // Intl separa símbolo y cifra con espacios duros; para comparar se normalizan.
@@ -76,5 +78,36 @@ describe('formatearParaEditar', () => {
   it('escribe el cero y el negativo', () => {
     expect(formatearParaEditar(0)).toBe('0')
     expect(formatearParaEditar(-2.5)).toBe('-2,5')
+  })
+})
+
+// Semilla §5.1: el texto exacto, con espacio normal después de `US$` y la raya (U+2013) entre los dos montos de un rango.
+describe('formatoUSD', () => {
+  it('los ejemplos de §5.1: entero, mitad hacia arriba, punto de miles', () => {
+    expect(formatoUSD(4451.87)).toBe('US$ 4.452')
+    expect(formatoUSD(126000)).toBe('US$ 126.000')
+    expect(formatoUSD(1234.5)).toBe('US$ 1.235')
+    expect(formatoUSD(0)).toBe('US$ 0')
+  })
+
+  it('agrupa también los miles de cuatro cifras', () => {
+    expect(formatoUSD(1000)).toBe('US$ 1.000')
+  })
+
+  it('un negativo lleva el signo delante, y lo que redondea a cero no lleva signo', () => {
+    expect(formatoUSD(-1234.5)).toBe('-US$ 1.235')
+    expect(formatoUSD(-0.4)).toBe('US$ 0')
+  })
+
+  it('lo que no es un número da una raya', () => {
+    expect(formatoUSD(Number.NaN)).toBe('—')
+    expect(formatoUSD(Number.POSITIVE_INFINITY)).toBe('—')
+  })
+})
+
+describe('formatoRango', () => {
+  it('une los dos montos con una raya entre espacios, sin reordenarlos', () => {
+    expect(formatoRango(4451.87, 8935.2)).toBe('US$ 4.452 – US$ 8.935')
+    expect(formatoRango(8935.2, 4451.87)).toBe('US$ 8.935 – US$ 4.452')
   })
 })
