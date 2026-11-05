@@ -58,4 +58,14 @@ describe('esquemaEntradasCalculadora', () => {
       ['autos', 'Escribe un número entero entre 1 y 400.'],
     ])
   })
+
+  it.each([null, undefined, 'x', [[]], 25])(
+    'con %j, que no es un objeto, da un solo problema sin lanzar',
+    (entrada) => {
+      const resultado = esquemaEntradasCalculadora.safeParse(entrada)
+      expect(resultado.success).toBe(false)
+      expect(resultado.error?.issues).toHaveLength(1)
+      expect(resultado.error?.issues[0]?.path).toEqual([])
+    },
+  )
 })

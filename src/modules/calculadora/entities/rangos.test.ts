@@ -62,4 +62,13 @@ describe('cuandoPasaron', () => {
     expect(cuando(con('autos'))).toBe(false)
     expect(cuando(con('margen', 'consultas'))).toBe(false)
   })
+
+  it('la frena si hay un problema sin campo: la entrada no era un objeto', () => {
+    expect(
+      cuando({
+        value: null,
+        issues: [{ code: 'invalid_type', expected: 'object', input: null, message: 'x', path: [] }],
+      }),
+    ).toBe(false)
+  })
 })

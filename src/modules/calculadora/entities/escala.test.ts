@@ -165,4 +165,14 @@ describe('esquemaEntradasEscala', () => {
   ])('%s fuera de rango da su mensaje', (campo, e, mensaje) => {
     expect(problemas(e)).toEqual([[campo, mensaje]])
   })
+
+  it.each([null, undefined, 'x', [[]], 25])(
+    'con %j, que no es un objeto, da un solo problema sin lanzar',
+    (e) => {
+      const resultado = esquemaEntradasEscala.safeParse(e)
+      expect(resultado.success).toBe(false)
+      expect(resultado.error?.issues).toHaveLength(1)
+      expect(resultado.error?.issues[0]?.path).toEqual([])
+    },
+  )
 })

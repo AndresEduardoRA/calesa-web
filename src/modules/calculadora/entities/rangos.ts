@@ -26,9 +26,13 @@ export function campoMonto(min: number, max: number) {
   )
 }
 
-// Para el `when` de una regla cruzada: corre si esos campos pasaron su rango, aunque otro campo haya fallado. Sin `when`, Zod 4 la
-// salta en cuanto el objeto trae un problema; con `() => true`, compararía un valor que ya falló.
+// Para el `when` de una regla cruzada: corre si esos campos pasaron su rango, aunque otro campo haya fallado (por tipo o por rango).
+// Sin `when`, Zod 4 la salta sólo si otro campo falló por tipo; con `() => true`, compararía un valor que ya falló. Si la entrada no
+// es un objeto, Zod deja un problema sin campo y no corre: la regla leería campos que no existen.
 export function cuandoPasaron(...campos: string[]) {
-  return (payload: zod.core.ParsePayload) =>
-    !payload.issues.some((problema) => campos.includes(String(problema.path?.[0])))
+  return ({ issues }: zod.core.ParsePayload) =>
+    issues.every((problema) => {
+      const campo = problema.path?.[0]
+      return campo !== undefined && !campos.includes(String(campo))
+    })
 }
