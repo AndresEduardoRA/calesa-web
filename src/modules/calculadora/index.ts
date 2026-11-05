@@ -14,3 +14,11 @@ export {
 } from './entities/config'
 export { calcularFugas, type Escenario, type ResultadoFugas } from './entities/calculadora'
 export { resumenDeFugas, type FilaDeFugas, type ResumenDeFugas } from './entities/resumen'
+export {
+  calcularEscala,
+  esquemaEntradasEscala,
+  textosDeEscala,
+  type EntradasEscala,
+  type ResultadoEscala,
+  type TextosDeEscala,
+} from './entities/escala'
