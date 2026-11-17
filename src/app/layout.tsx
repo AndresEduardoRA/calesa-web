@@ -8,6 +8,8 @@ import {
   DESCRIPCION_APP,
   NOMBRE_APP,
 } from '@/shared/config/app'
+import { robotsDelLayout } from '@/shared/config/cabeceras'
+import { leerEntornoPublico } from '@/shared/config/entorno'
 import './globals.css'
 
 // Las fuentes son del sistema de diseño de la semilla: el esqueleto usa las del sistema operativo (`--font-sans` y `--font-mono` de
@@ -18,8 +20,8 @@ export const metadata: Metadata = {
   title: { default: NOMBRE_APP, template: `%s · ${NOMBRE_APP}` },
   description: DESCRIPCION_APP,
   applicationName: NOMBRE_APP,
-  // Mientras la semilla no diga lo contrario, nada de esto se indexa.
-  robots: { index: false, follow: false },
+  // Fuera de producción nada se indexa (el mismo noindex que la cabecera X-Robots-Tag de next.config.ts).
+  ...robotsDelLayout(leerEntornoPublico()['VERCEL_ENV']),
 }
 
 export const viewport: Viewport = {
