@@ -47,9 +47,26 @@ describe('renderizar · las 12 plantillas con la reunión de ejemplo', () => {
     expect(cancelada).toContain('METHOD:CANCEL')
   })
 
+  it('el adjunto va sólo con el .ics, con su método y el mismo contenido', () => {
+    for (const p of PLANTILLAS) {
+      const dibujado = renderizar(DATOS_DE_EJEMPLO[p], CONTEXTO)
+      expect(dibujado.adjunto === null).toBe(dibujado.ics === null)
+    }
+    const confirmada = renderizar(DATOS_DE_EJEMPLO['reunion-confirmada'], CONTEXTO)
+    const cambiada = renderizar(DATOS_DE_EJEMPLO['reunion-cambiada'], CONTEXTO)
+    const cancelada = renderizar(DATOS_DE_EJEMPLO['reunion-cancelada'], CONTEXTO)
+    expect(confirmada.adjunto?.tipo).toBe('text/calendar; method=REQUEST')
+    expect(cambiada.adjunto?.tipo).toBe('text/calendar; method=REQUEST')
+    expect(cancelada.adjunto?.tipo).toBe('text/calendar; method=CANCEL')
+    expect(Buffer.from(confirmada.adjunto?.contenido ?? '', 'base64').toString('utf8')).toBe(
+      confirmada.ics,
+    )
+  })
+
   it('la cancelación al anfitrión no lleva .ics', () => {
     const datos = { ...DATOS_DE_EJEMPLO['reunion-cancelada'], destinatario: 'anfitrion' as const }
     expect(renderizar(datos, CONTEXTO).ics).toBeNull()
+    expect(renderizar(datos, CONTEXTO).adjunto).toBeNull()
   })
 })
 

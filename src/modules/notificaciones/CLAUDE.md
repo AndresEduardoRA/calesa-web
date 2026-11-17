@@ -16,6 +16,7 @@ Las 12 plantillas de correo de §6.8 (con marca y modo texto), el .ics de una re
 - `entities/html.ts` — el escape: la etiqueta `html` escapa cada interpolación; `urlSegura` sólo deja pasar `http:` y `https:`.
 - `entities/render.ts` — `renderizar(datos, contexto)` puro: asunto, html, texto y .ics.
 - `entities/ics.ts` — .ics RFC 5545 a mano: UID `<reunionId>@calesa.app`, `SEQUENCE` = la secuencia recibida, CRLF, líneas plegadas a 75 octetos.
+- `entities/adjunto-ics.ts` — el .ics como adjunto (`text/calendar; method=REQUEST|CANCEL`, UTF-8 en base64); `renderizar` lo devuelve y `armar()` (`infra/nucleo.ts`) lo pone en el mensaje.
 - `entities/referencia.ts` — la clave idempotente de cada correo.
 - `entities/registro.ts` — la interfaz `RegistroDeCorreos` (tipos); `entities/reintentos.ts` — 3 intentos, esperas de 300 y 900 ms, sólo se reintenta `inesperado`.
 - `infra/notificador.ts` — compone `enviar.ts`, `programar.ts` y `cancelar.ts` sobre `enviarEmail()` y compañía (`infra/correo.ts`, el único que lee el entorno).
@@ -36,7 +37,7 @@ Las 12 plantillas de correo de §6.8 (con marca y modo texto), el .ics de una re
 ## Ojo
 
 - **El `terminado` de P07 está cumplido en parte.** Cada correo se registra contra la interfaz `RegistroDeCorreos` y las pruebas usan uno en memoria: la base se escribe sólo por RPC (§3) y no hay ninguna todavía. El adaptador sobre las RPC es el paso P29 (tras P27, RPC de `correos_salientes`, del carril `datos`).
-- El .ics se arma y se guarda en `adjunto_ics`, pero **no sale adjunto**: `enviarEmail()` no admite adjuntos hasta P28 (carril `base`). Mientras tanto el correo dice la fecha, la hora y el enlace de Meet.
+- El .ics sale adjunto en todo camino que arma el correo (enviar, programar, reintentar, despachar). `adjunto_ics` guarda el texto del primero (CRLF), no el base64; un reenvío lo vuelve a dibujar desde `datos` (mismo UID y `SEQUENCE`, `DTSTAMP` nuevo). `reprogramar` con `resendId` sólo cambia la hora en el proveedor: no vuelve a armar ni a mandar el correo.
 - Quien programa debe cancelar los de la secuencia vieja y programar los nuevos al cambiar una reunión. Los recordatorios llevan el hash del enlace de Meet en su referencia: si cambia el enlace (R4.21), el recordatorio nuevo no choca con el cancelado.
 - Un correo programado en Resend que ya salió sigue `programado` en el registro hasta que P13 (webhook) lo marque.
 - La cabecera lleva la palabra «Calesa» en lugar del logo (no está en el repo); se cambia en `entities/marca.ts`.
