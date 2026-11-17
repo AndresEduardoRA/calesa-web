@@ -66,7 +66,8 @@ export function verificarTokenDeSolicitud(
   if (!igualesEnTiempoConstante(recibida, firma(secreto, id, exp))) {
     return fallo('validacion', TEXTO_TOKEN_VENCIDO)
   }
+  // Escrito como «no está antes del vencimiento»: con un reloj inválido (`NaN`) también falla cerrado.
   const ahora = (dependencias.ahora ?? new Date()).getTime()
-  if (ahora >= Number(exp) * 1000) return fallo('regla', TEXTO_TOKEN_VENCIDO)
+  if (!(ahora < Number(exp) * 1000)) return fallo('regla', TEXTO_TOKEN_VENCIDO)
   return ok({ solicitudId: id, venceEn: venceEn(Number(exp)) })
 }

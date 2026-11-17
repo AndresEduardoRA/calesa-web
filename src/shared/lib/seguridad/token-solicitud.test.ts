@@ -98,6 +98,11 @@ describe('verificarTokenDeSolicitud: vencimiento (emitido 10:00)', () => {
     })
   })
 
+  it('con un reloj inválido falla cerrado: un token con firma buena no pasa', () => {
+    const r = verificarTokenDeSolicitud(TOKEN, { entorno: conSecreto, ahora: new Date('no') })
+    expect(r).toMatchObject({ ok: false, error: { codigo: 'regla' } })
+  })
+
   it('sin TOKEN_FIRMA_SECRETO da inesperado', () => {
     const r = verificarTokenDeSolicitud(TOKEN, { entorno: entorno({}), ahora: EMITIDO })
     expect(r).toMatchObject({ ok: false, error: { codigo: 'inesperado' } })
