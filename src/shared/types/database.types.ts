@@ -1188,6 +1188,18 @@ export type Database = {
       }
       es_admin: { Args: Record<PropertyKey, never>; Returns: boolean }
       es_usuario_activo: { Args: Record<PropertyKey, never>; Returns: boolean }
+      guardar_config_agenda: {
+        Args: {
+          p_actualizado_en_esperado: string
+          p_anticipacion_min_horas: number
+          p_cancelar_hasta_horas: number
+          p_descanso_min: number
+          p_duracion_min: number
+          p_horizonte_dias: number
+          p_max_reuniones_dia: number
+        }
+        Returns: Json
+      }
       guardar_config_calculadora: {
         Args: {
           p_actualizado_en_esperado: string
@@ -1201,6 +1213,10 @@ export type Database = {
           p_tasa: number
           p_volatilidad: Database['public']['Enums']['volatilidad']
         }
+        Returns: Json
+      }
+      guardar_horario_base: {
+        Args: { p_actualizado_en_esperado: string; p_tramos: Json }
         Returns: Json
       }
       ids_con_alcance: { Args: { p_clave: string }; Returns: string[] }
