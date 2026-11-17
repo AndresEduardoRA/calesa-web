@@ -1022,6 +1022,36 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      _tomar_correo: {
+        Args: {
+          p_desde: Database['public']['Enums']['estado_correo'][]
+          p_destino: Database['public']['Enums']['estado_correo']
+          p_id: string
+        }
+        Returns: {
+          adjunto_ics: string | null
+          creado_en: string
+          datos: NonNullable<Json>
+          enviado_en: string | null
+          estado: Database['public']['Enums']['estado_correo']
+          id: string
+          intentos: number
+          para: string
+          plantilla: string
+          programado_para: string | null
+          referencia: string | null
+          resend_id: string | null
+          reunion_id: string | null
+          solicitud_id: string | null
+          ultimo_error: string | null
+        }
+        SetofOptions: {
+          from: '*'
+          to: 'correos_salientes'
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       _transicion: {
         Args: {
           p_desde: Database['public']['Enums']['estado_solicitud']
@@ -1108,6 +1138,24 @@ export type Database = {
       es_admin: { Args: Record<PropertyKey, never>; Returns: boolean }
       es_usuario_activo: { Args: Record<PropertyKey, never>; Returns: boolean }
       ids_con_alcance: { Args: { p_clave: string }; Returns: string[] }
+      marcar_correo_cancelado: { Args: { p_id: string }; Returns: Json }
+      marcar_correo_enviado: {
+        Args: { p_enviado_en: string; p_id: string; p_intentos: number; p_resend_id?: string }
+        Returns: Json
+      }
+      marcar_correo_fallido: {
+        Args: { p_id: string; p_intentos: number; p_ultimo_error: string }
+        Returns: Json
+      }
+      marcar_correo_reprogramado: {
+        Args: {
+          p_cambiar_resend_id?: boolean
+          p_id: string
+          p_programado_para: string
+          p_resend_id?: string
+        }
+        Returns: Json
+      }
       mis_permisos: { Args: Record<PropertyKey, never>; Returns: Json }
       puede_en_solicitud: { Args: { p_clave: string; p_solicitud: string }; Returns: boolean }
       reasignar_solicitud: {
