@@ -21,5 +21,6 @@ export {
   type AccionLimitada,
   type ContarEnvio,
 } from './limites'
+export { contadorDeSupabase, type ClienteDeContarEnvio } from './contador-de-supabase'
 export { URL_SITEVERIFY, verificarTurnstile } from './turnstile'
 export { TEXTO_LIMITE, TEXTO_TOKEN_VENCIDO, TEXTO_TURNSTILE } from './textos'
