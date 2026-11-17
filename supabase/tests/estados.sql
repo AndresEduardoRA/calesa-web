@@ -30,7 +30,7 @@ select pruebas.caso('9 por RPC', 'V1', $$select public.cambiar_estado_solicitud(
   (select actualizado_en from public.solicitudes where id = {S1})) ->> 'estado' = 'realizada'$$, 'verdad');
 do $$
 begin
-  if (select estado from public.reuniones where id = '00000000-0000-4000-8000-000000000021') <> 'realizada' then
+  if (select estado from public.reuniones where id = '00000000-0000-4000-8000-000000000021') is distinct from 'realizada' then
     raise exception 'R1 no quedó realizada';
   end if;
 end $$;
@@ -109,7 +109,7 @@ update public.solicitudes set ultimo_contacto_en = '2026-01-01Z' where id = '000
 update public.solicitudes set estado = 'nueva' where id = '00000000-0000-4000-8000-000000000011';
 do $$
 begin
-  if (select ultimo_contacto_en from public.solicitudes where id = '00000000-0000-4000-8000-000000000011') <> now() then
+  if (select ultimo_contacto_en from public.solicitudes where id = '00000000-0000-4000-8000-000000000011') is distinct from now() then
     raise exception 'ultimo_contacto_en no pasó a now()';
   end if;
   if (select row(estado, cancelada_en)::text from public.reuniones where id = '00000000-0000-4000-8000-000000000021')

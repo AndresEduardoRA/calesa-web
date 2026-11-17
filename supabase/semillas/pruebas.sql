@@ -263,3 +263,34 @@ $$;
 
 revoke all on function pruebas.solicitud(uuid, text, text, text), pruebas.reunion(uuid, uuid, timestamptz), pruebas.token(text)
   from public, anon, authenticated;
+
+-- La agenda de las pruebas de reserva: abierta de 08:00 a 20:00 los 7 días; `hora(d, 'HH:MI')` = esa hora local (zona de la config)
+-- dentro de d días; `claves(json, esperadas)` = el objeto (o cada objeto del arreglo, que no puede ser vacío) tiene esas claves exactas.
+create or replace function pruebas.abrir_agenda()
+returns void
+language sql
+as $$
+  delete from public.horario_base;
+  insert into public.horario_base (dia_semana, desde, hasta) select d, '08:00', '20:00' from generate_series(1, 7) d;
+$$;
+
+create or replace function pruebas.hora(p_dias int, p_hora text)
+returns timestamptz
+language sql
+stable
+as $$
+  select ((now() at time zone c.zona_horaria)::date + p_dias + p_hora::time) at time zone c.zona_horaria
+    from public.config_agenda c where c.id = 1
+$$;
+
+create or replace function pruebas.claves(p_json jsonb, p_esperadas text[])
+returns boolean
+language sql
+immutable
+as $$
+  select coalesce(bool_and((select coalesce(array_agg(k order by k collate "C"), '{}') from jsonb_object_keys(o) k)
+           = (select array_agg(e order by e collate "C") from unnest(p_esperadas) e)), false)
+    from jsonb_array_elements(case jsonb_typeof(p_json) when 'array' then p_json else jsonb_build_array(p_json) end) o
+$$;
+
+revoke all on function pruebas.abrir_agenda(), pruebas.hora(int, text), pruebas.claves(jsonb, text[]) from public, anon, authenticated;
