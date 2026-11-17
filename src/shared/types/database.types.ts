@@ -853,6 +853,7 @@ export type Database = {
         Returns: number
       }
       _bloquear_agenda: { Args: Record<PropertyKey, never>; Returns: undefined }
+      _bloquear_solicitudes: { Args: Record<PropertyKey, never>; Returns: undefined }
       _bloquear_vigente: {
         Args: { p_reunion: string; p_solicitud: string }
         Returns: {
@@ -897,6 +898,7 @@ export type Database = {
         Args: { p_antes: Json; p_despues: Json; p_permitidas: string[] }
         Returns: string
       }
+      _elegir_asignado: { Args: { p_extra?: Json }; Returns: string }
       _es_elegible: {
         Args: { p_excluir: string; p_exigir_turno?: boolean; p_h: string; p_perfil: string }
         Returns: boolean
@@ -912,6 +914,19 @@ export type Database = {
           p_zona: string
         }
         Returns: string
+      }
+      _juntar_solicitud: {
+        Args: {
+          p_e: Omit<
+            Database['public']['Tables']['solicitudes']['Row'],
+            Database['public']['Tables']['solicitudes']['ComputedFields']
+          >
+          p_n: Omit<
+            Database['public']['Tables']['solicitudes']['Row'],
+            Database['public']['Tables']['solicitudes']['ComputedFields']
+          >
+        }
+        Returns: string[]
       }
       _limitar_a: { Args: { p_solicitud: string }; Returns: string }
       _mas_minutos: { Args: { p_min: number; p_t: string }; Returns: string }
@@ -1023,6 +1038,33 @@ export type Database = {
       contar_envio: {
         Args: { p_clave: string; p_maximo: number; p_ventana_segundos: number }
         Returns: boolean
+      }
+      crear_o_juntar_solicitud: {
+        Args: {
+          p_administracion?: number
+          p_autos_hoy?: number
+          p_autos_meta?: number
+          p_calc_consultas?: number
+          p_calc_margen?: number
+          p_calc_respuesta?: Database['public']['Enums']['tiempo_respuesta']
+          p_consentimiento_en: string
+          p_email: string
+          p_importadora?: string
+          p_nombre: string
+          p_origen: Database['public']['Enums']['origen_solicitud']
+          p_origenes?: string[]
+          p_pagina_origen?: string
+          p_pais?: string
+          p_ref_codigo?: string
+          p_utm_campaign?: string
+          p_utm_content?: string
+          p_utm_medium?: string
+          p_utm_source?: string
+          p_utm_term?: string
+          p_vendedores?: number
+          p_whatsapp?: string
+        }
+        Returns: Json
       }
       datos_para_horas: { Args: { p_solicitud_id: string; p_token_hash: string }; Returns: Json }
       es_admin: { Args: Record<PropertyKey, never>; Returns: boolean }
