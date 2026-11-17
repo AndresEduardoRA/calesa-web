@@ -45,11 +45,46 @@ Sobre `96e037c` (HEAD) se volvieron a correr la prueba final, `pnpm test` sin el
   paso no toca. Pasan sin `PILOTO_AUTO` ni `COORD_MERGE_AUTO` (le pasó igual a P02).
 - Carreras: el kit no tiene `db:carreras`. La concurrencia real (dos conexiones a la vez) no se probó; la defienden el candado de
   agenda, el orden de bloqueo y la exclusión. Las pruebas de PGlite cubren la conducta en serie y el respaldo de la exclusión.
-- Splinter no se corrió. Se espera `authenticated_security_definer_function_executable` en las tres funciones de `authenticated`:
-  es a propósito (P1).
+- Splinter no se corrió en esta verificación; corrió después, en la del CI del PR #13 (abajo). Se espera
+  `authenticated_security_definer_function_executable` en las tres funciones de `authenticated`: es a propósito (P1).
 - `supabase/semillas/pruebas.sql` quedó en 296 líneas (el plan estimaba 270 o menos), bajo el tope de 300.
 
+## CI del PR #13 en rojo (2026-11-17)
+
+El coordinador devolvió el paso con «CI en rojo» (corrida `44092129613`, sobre `75db0b5`). Sólo cayó el job «Base · reset, tipos,
+probar, lint y advisors», y cayó en su primer paso, `supabase start`, antes de tocar una migración: el puerto `55322` del runner ya
+estaba en uso cuando arrancó el contenedor de la base (`failed to bind host port for 0.0.0.0:55322 … address already in use`,
+`ci-44092129613-base.txt`). Los 4 bloques de e2e de la misma corrida levantaron la misma pila en el mismo puerto y pasaron. No hay
+código que arreglar: el paso no cambia nada del esquema ni de la app.
+
+Lo que el job no llegó a correr se corrió en el stack del carril sobre `75db0b5`, en el orden del job (`ci-base-local.txt`; psql
+dentro del contenedor porque esta máquina no tiene psql):
+
+| Paso del job                                  | Resultado                                  |
+| --------------------------------------------- | ------------------------------------------ |
+| `pnpm db:reset`                               | rc 0                                       |
+| `pnpm db:types` y `git diff --exit-code`      | rc 0, sin diff                             |
+| `pnpm db:probar`                              | rc 0: 96 ✓ y 0 ✗                           |
+| `supabase/tests/privilegios-de-anon.sql`      | rc 0                                       |
+| `pnpm db:lint`                                | rc 0, `"results": []`                      |
+| Splinter (`scripts/splinter.sql`) sin `ERROR` | rc 0 y 0 filas `ERROR` (`ci-advisors.txt`) |
+
+- Splinter da 9 `authenticated_security_definer_function_executable` (las tres de P05, a propósito por P1, y seis de P02) y 8
+  `function_search_path_mutable`, todos de `pruebas.*`: los ayudantes de `supabase/semillas/pruebas.sql`, que sólo existen en local y
+  en `db:probar` y no tienen permisos para `anon` ni `authenticated`. `pruebas.caso` y `pruebas.error` ejecutan el SQL del caso con el
+  `search_path` de la sesión, así que fijarlo en ellos cambiaría lo que prueban. Ninguno es `ERROR`, que es lo que hace caer el job.
+- La prueba final del paso, vuelta a correr con estas notas (`prueba-final-ci.txt`): rc 1, igual que antes. `db:probar` da 96 ✓, lint
+  y typecheck salen sin avisos y vitest da 1253/1253. Caen sólo los mismos 5 tests del kit, por el entorno del bucle: sin `PILOTO_*`
+  ni `COORD_*` pasan 45/45 (`test-kit-sin-entorno-ci.txt`).
+- Este commit de notas no arregla la causa: al publicarlo, el bucle empuja y el CI vuelve a correr entero.
+
 ## Pendientes ajenos al paso
+
+- El bloque de puertos del proyecto (`55321`–`55327`, y `+100` por carril) cae dentro del rango efímero de Linux (`32768`–`60999`,
+  `/proc/sys/net/ipv4/ip_local_port_range`). Una conexión saliente del runner, como las descargas de imágenes que hace
+  `supabase start`, puede tomar uno de esos puertos justo antes de que arranque el contenedor. Probablemente eso tumbó el job «Base»
+  del PR #13. Es del kit, no de un carril: un bloque fuera de ese rango en `piloto.config`, o reservar el rango en el CI
+  (`sysctl net.ipv4.ip_local_reserved_ports`) antes de `supabase start`.
 
 - Next 16.4.3 avisa una vulnerabilidad conocida al compilar (`e2e-completo.txt`). Actualizarlo es una compuerta `dependencia`,
   del carril `base`.

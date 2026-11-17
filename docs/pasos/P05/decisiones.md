@@ -85,3 +85,12 @@ Para el coordinador, los `depende_de` que cambian: **P11** + P30; **P12** + P31;
 La ficha `src/modules/solicitudes/CLAUDE.md` (carril de `solicitudes`, no se toca desde aquí) quedó corta en dos líneas: dice que
 `crear_o_juntar_solicitud` lo hace P05 (ahora es de P30) y que el panel cancela por `cancelar_reunion` (desde el panel es
 `cancelar_reunion_panel`; `cancelar_reunion` es la del enlace del visitante). Lo actualiza su dueño cuando toque el módulo.
+
+## CI del PR #13 en rojo por el runner (2026-11-17)
+
+El job «Base» cayó en `supabase start` porque el puerto `55322` del runner ya estaba ocupado. Ninguna migración llegó a aplicarse.
+No se cambió código. Los pasos del job corrieron en local sin fallas, y la causa (el bloque de puertos dentro del rango efímero) es
+del kit: queda como pendiente en la bitácora. Sin `gh` que escriba, el job no se puede volver a correr desde el paso. El commit de
+notas que registra todo esto es el que, al publicarse, vuelve a correr el CI. Los 8 avisos `function_search_path_mutable` de
+`pruebas.*` no se tocan: son ayudantes que sólo existen en local, y en `caso` y `error` un `search_path` fijo cambiaría lo que ejecuta
+cada caso.
