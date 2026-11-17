@@ -11,12 +11,12 @@ const INICIO = '2026-11-03T14:00:00Z' // mar 3 nov 2026, 10:00 en La Paz
 
 describe('las fechas de los correos', () => {
   it('al visitante, en su zona y sin rótulo', () => {
-    expect(fechaParaVisitante(INICIO, 'America/La_Paz')).toBe('3 nov 2026, 10:00')
-    expect(fechaParaVisitante(INICIO, 'America/Bogota')).toBe('3 nov 2026, 09:00')
+    expect(fechaParaVisitante(INICIO, 'America/La_Paz')).toBe('mar 3 nov, 10:00')
+    expect(fechaParaVisitante(INICIO, 'America/Bogota')).toBe('mar 3 nov, 09:00')
   })
 
   it('al equipo, en la hora de Bolivia y con el rótulo', () => {
-    expect(fechaParaEquipo(INICIO)).toBe('3 nov 2026, 10:00 (hora de Bolivia)')
+    expect(fechaParaEquipo(INICIO)).toBe('mar 3 nov, 10:00 (hora de Bolivia)')
   })
 })
 

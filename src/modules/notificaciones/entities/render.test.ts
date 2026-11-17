@@ -5,9 +5,9 @@ import { CONTEXTO, DATOS_DE_EJEMPLO, REUNION, REUNION_EN_BOGOTA } from './ejempl
 import { renderizar } from './render'
 
 const ASUNTOS: Record<(typeof PLANTILLAS)[number], string> = {
-  'reunion-confirmada': 'Tu demo con Calesa: 3 nov 2026, 10:00',
-  'reunion-nueva-anfitrion': 'Nueva demo: Importadora X, 3 nov 2026, 10:00 (hora de Bolivia)',
-  'reunion-cambiada': 'Cambió tu demo con Calesa: 4 nov 2026, 11:00',
+  'reunion-confirmada': 'Tu demo con Calesa: mar 3 nov, 10:00',
+  'reunion-nueva-anfitrion': 'Nueva demo: Importadora X, mar 3 nov, 10:00 (hora de Bolivia)',
+  'reunion-cambiada': 'Cambió tu demo con Calesa: mié 4 nov, 11:00',
   'reunion-cambiada-equipo': 'Cambio de demo: Importadora X',
   'reunion-cancelada': 'Se canceló tu demo con Calesa',
   'recordatorio-24h': 'Mañana es tu demo con Calesa',
@@ -94,13 +94,13 @@ describe('renderizar · zonas, formato y topes', () => {
       { ...DATOS_DE_EJEMPLO['reunion-confirmada'], reunion: REUNION_EN_BOGOTA },
       CONTEXTO,
     )
-    expect(visitante.asunto).toBe('Tu demo con Calesa: 3 nov 2026, 09:00')
+    expect(visitante.asunto).toBe('Tu demo con Calesa: mar 3 nov, 09:00')
     expect(visitante.texto).not.toContain('hora de Bolivia')
     const anfitrion = renderizar(
       { ...DATOS_DE_EJEMPLO['reunion-nueva-anfitrion'], reunion: REUNION_EN_BOGOTA },
       CONTEXTO,
     )
-    expect(anfitrion.texto).toContain('3 nov 2026, 10:00 (hora de Bolivia)')
+    expect(anfitrion.texto).toContain('mar 3 nov, 10:00 (hora de Bolivia)')
   })
 
   it('detalle-calculadora: el rango, las 6 filas, las 3 frases y el botón a /agendar', () => {

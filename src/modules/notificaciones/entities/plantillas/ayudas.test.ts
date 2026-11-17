@@ -5,9 +5,9 @@ import { enlaceDeActividad, enlaceDeSolicitud, fechaDe, minutosDeDuracion } from
 
 describe('las ayudas de las plantillas', () => {
   it('la fecha depende de quién lee', () => {
-    expect(fechaDe(REUNION.inicio, REUNION_EN_BOGOTA, 'visitante')).toBe('3 nov 2026, 09:00')
+    expect(fechaDe(REUNION.inicio, REUNION_EN_BOGOTA, 'visitante')).toBe('mar 3 nov, 09:00')
     expect(fechaDe(REUNION.inicio, REUNION_EN_BOGOTA, 'equipo')).toBe(
-      '3 nov 2026, 10:00 (hora de Bolivia)',
+      'mar 3 nov, 10:00 (hora de Bolivia)',
     )
   })
 

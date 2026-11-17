@@ -26,7 +26,7 @@ Las 12 plantillas de correo de §6.8 (con marca y modo texto), el .ics de una re
 - Todo dato de la persona entra al HTML por el escape (`marca.ts`); nunca se arma HTML con una plantilla de texto normal.
 - El .ics nunca lleva el enlace de gestión (lleva el token) y el UID de una reunión no cambia: el calendario del visitante actualiza el evento.
 - La referencia lleva lo que cambia el cuerpo: la secuencia de la reunión y, en los recordatorios, el hash del enlace de Meet. Con la misma referencia y otro cuerpo Resend responde 409.
-- Las fechas salen de `fechas.ts` y los montos de `formato.ts`; al visitante en su zona, al equipo en la hora de Bolivia con rótulo.
+- Las fechas salen de `fechas.ts` (con el día de la semana, «mar 3 nov, 10:00») y los montos de `formato.ts`; al visitante en su zona, al equipo en la hora de Bolivia con rótulo.
 - El correo se registra DESPUÉS de mandarlo (no hay estado «pendiente»). Un correo que no sale queda `fallido` y no tumba la acción que lo pidió; se avisa una vez a `EMAIL_AVISOS` (`correo-fallido`), nunca un aviso de un aviso ni con el proveedor apagado.
 - La misma referencia no manda dos veces: `enviarAhora` y `programar` devuelven la fila que ya estaba (`yaEstaba`). Un `conflicto` (409) tampoco es un fallo.
 - `enlaceGestion` (lleva el token) nunca se guarda en `correos_salientes.datos`: un correo que se vuelve a armar desde el registro sale sin él y remite al correo de confirmación.
@@ -39,5 +39,4 @@ Las 12 plantillas de correo de §6.8 (con marca y modo texto), el .ics de una re
 - El .ics se arma y se guarda en `adjunto_ics`, pero **no sale adjunto**: `enviarEmail()` no admite adjuntos hasta P28 (carril `base`). Mientras tanto el correo dice la fecha, la hora y el enlace de Meet.
 - Quien programa debe cancelar los de la secuencia vieja y programar los nuevos al cambiar una reunión. Los recordatorios llevan el hash del enlace de Meet en su referencia: si cambia el enlace (R4.21), el recordatorio nuevo no choca con el cancelado.
 - Un correo programado en Resend que ya salió sigue `programado` en el registro hasta que P13 (webhook) lo marque.
-- Hoy la fecha sale sin día de la semana («3 nov 2026, 10:00»): `fechas.ts` no lo escribe. Se cambia en `entities/formato-correo.ts`.
 - La cabecera lleva la palabra «Calesa» en lugar del logo (no está en el repo); se cambia en `entities/marca.ts`.
