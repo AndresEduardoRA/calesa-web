@@ -18,8 +18,9 @@ major_version = 17
 
 [db.seed]
 enabled = true
-# En orden. `scripts/probar-schema.mjs` lee esta lista.
-sql_paths = ["./seed.sql"]
+# En orden. `scripts/probar-schema.mjs` lee esta lista. `semillas/pruebas.sql` son los usuarios y datos de la matriz RLS (sólo
+# local y pruebas: la nube no corre seeds).
+sql_paths = ["./seed.sql", "./semillas/pruebas.sql"]
 
 [studio]
 enabled = true

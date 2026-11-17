@@ -619,6 +619,55 @@ export type Database = {
         }
         Relationships: []
       }
+      permisos: {
+        Row: {
+          clave: string
+          creado_en: string
+          descripcion: string
+        }
+        ComputedFields: never
+        Insert: {
+          clave: string
+          creado_en?: string
+          descripcion: string
+        }
+        Update: {
+          clave?: string
+          creado_en?: string
+          descripcion?: string
+        }
+        Relationships: []
+      }
+      permisos_rol: {
+        Row: {
+          alcance: string
+          clave: string
+          creado_en: string
+          rol: Database['public']['Enums']['rol_usuario']
+        }
+        ComputedFields: never
+        Insert: {
+          alcance: string
+          clave: string
+          creado_en?: string
+          rol: Database['public']['Enums']['rol_usuario']
+        }
+        Update: {
+          alcance?: string
+          clave?: string
+          creado_en?: string
+          rol?: Database['public']['Enums']['rol_usuario']
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'permisos_rol_clave_fkey'
+            columns: ['clave']
+            isOneToOne: false
+            referencedRelation: 'permisos'
+            referencedColumns: ['clave']
+          },
+        ]
+      }
       reuniones: {
         Row: {
           actualizado_en: string
@@ -803,7 +852,17 @@ export type Database = {
         Args: { p_maximo: number; p_pedido: number; p_por_defecto: number }
         Returns: number
       }
+      _columna_cambiada: {
+        Args: { p_antes: Json; p_despues: Json; p_permitidas: string[] }
+        Returns: string
+      }
       _mas_minutos: { Args: { p_min: number; p_t: string }; Returns: string }
+      es_admin: { Args: Record<PropertyKey, never>; Returns: boolean }
+      es_usuario_activo: { Args: Record<PropertyKey, never>; Returns: boolean }
+      ids_con_alcance: { Args: { p_clave: string }; Returns: string[] }
+      mis_permisos: { Args: Record<PropertyKey, never>; Returns: Json }
+      puede_en_solicitud: { Args: { p_clave: string; p_solicitud: string }; Returns: boolean }
+      tiene_permiso: { Args: { p_clave: string }; Returns: boolean }
     }
     Enums: {
       estado_correo: 'enviado' | 'programado' | 'cancelado' | 'fallido'
