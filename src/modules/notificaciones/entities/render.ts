@@ -1,5 +1,7 @@
 // Lo único que ve el resto del módulo de las plantillas: `renderizar(datos, contexto)` → asunto, html, texto y, si toca, el .ics.
 // Puro: no lee el reloj ni el entorno (llegan en `contexto`).
+import type { AdjuntoDeEmail } from '@/shared/lib/email/tipos'
+import { adjuntoDeIcs } from './adjunto-ics'
 import type { Contenido, Contexto } from './contenido'
 import type { DatosDeCorreo } from './datos'
 import { armarIcs } from './ics'
@@ -19,7 +21,14 @@ const COMPOSITORES: Record<DatosDeCorreo['plantilla'], Compositor> = {
   ...plantillasDelEquipo,
 } as Record<DatosDeCorreo['plantilla'], Compositor>
 
-export type CorreoRenderizado = { asunto: string; html: string; texto: string; ics: string | null }
+// `adjunto` es el .ics listo para `enviarEmail()`; no es nulo si y sólo si `ics` no lo es.
+export type CorreoRenderizado = {
+  asunto: string
+  html: string
+  texto: string
+  ics: string | null
+  adjunto: AdjuntoDeEmail | null
+}
 
 export function renderizar(datos: DatosDeCorreo, contexto: Contexto): CorreoRenderizado {
   const contenido = COMPOSITORES[datos.plantilla](datos, contexto)
@@ -37,5 +46,6 @@ export function renderizar(datos: DatosDeCorreo, contexto: Contexto): CorreoRend
           organizador: contexto.organizador,
         })
       : null
-  return { asunto: contenido.asunto, html, texto, ics }
+  const adjunto = ics !== null && contenido.ics ? adjuntoDeIcs(ics, contenido.ics) : null
+  return { asunto: contenido.asunto, html, texto, ics, adjunto }
 }

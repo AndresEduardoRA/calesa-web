@@ -54,8 +54,8 @@ insert into public.bloqueos (perfil_id, inicio, fin, motivo, creado_por) values
    '00000000-0000-4000-8000-000000000003');
 
 -- Lo que V1 no tiene que ver: sin estas filas, «0 filas» no prueba nada.
-insert into public.invitaciones (id, email, invitado_por) values
-  ('00000000-0000-4000-8000-000000000051', 'nuevo@ejemplo.test', '00000000-0000-4000-8000-000000000001');
+insert into public.invitaciones (id, email, invitado_por, nombre) values
+  ('00000000-0000-4000-8000-000000000051', 'nuevo@ejemplo.test', '00000000-0000-4000-8000-000000000001', 'Persona Nueva');
 insert into public.eventos (tipo, pagina) values ('clic_agendar', '/');
 insert into public.metricas_diarias (dia, solicitudes) values ('2026-11-02', 2);
 insert into public.correos_salientes (para, plantilla, estado) values ('cliente1@ejemplo.test', 'confirmacion', 'enviado');

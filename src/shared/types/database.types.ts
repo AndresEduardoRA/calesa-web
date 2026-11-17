@@ -197,8 +197,9 @@ export type Database = {
           reunion_id: string | null
           solicitud_id: string | null
           ultimo_error: string | null
+          _correo_json: Json | null
         }
-        ComputedFields: never
+        ComputedFields: '_correo_json'
         Insert: {
           adjunto_ics?: string | null
           creado_en?: string
@@ -392,6 +393,7 @@ export type Database = {
           expira_en: string
           id: string
           invitado_por: string
+          nombre: string
         }
         ComputedFields: never
         Insert: {
@@ -403,6 +405,7 @@ export type Database = {
           expira_en?: string
           id?: string
           invitado_por: string
+          nombre: string
         }
         Update: {
           aceptada_en?: string | null
@@ -413,6 +416,7 @@ export type Database = {
           expira_en?: string
           id?: string
           invitado_por?: string
+          nombre?: string
         }
         Relationships: [
           {
@@ -591,8 +595,9 @@ export type Database = {
           nombre: string
           rol: Database['public']['Enums']['rol_usuario']
           whatsapp: string | null
+          _perfil_json: Json | null
         }
-        ComputedFields: never
+        ComputedFields: '_perfil_json'
         Insert: {
           activo?: boolean
           actualizado_en?: string
@@ -853,6 +858,7 @@ export type Database = {
         Returns: number
       }
       _bloquear_agenda: { Args: Record<PropertyKey, never>; Returns: undefined }
+      _bloquear_solicitudes: { Args: Record<PropertyKey, never>; Returns: undefined }
       _bloquear_vigente: {
         Args: { p_reunion: string; p_solicitud: string }
         Returns: {
@@ -897,6 +903,18 @@ export type Database = {
         Args: { p_antes: Json; p_despues: Json; p_permitidas: string[] }
         Returns: string
       }
+      _correo_invalido: { Args: { p_campo: string }; Returns: undefined }
+      _correo_json: {
+        Args: {
+          c: Omit<
+            Database['public']['Tables']['correos_salientes']['Row'],
+            Database['public']['Tables']['correos_salientes']['ComputedFields']
+          >
+        }
+        Returns: Json
+      }
+      _dia_local: { Args: { p_t: string }; Returns: string }
+      _elegir_asignado: { Args: { p_extra?: Json }; Returns: string }
       _es_elegible: {
         Args: { p_excluir: string; p_exigir_turno?: boolean; p_h: string; p_perfil: string }
         Returns: boolean
@@ -912,6 +930,19 @@ export type Database = {
           p_zona: string
         }
         Returns: string
+      }
+      _juntar_solicitud: {
+        Args: {
+          p_e: Omit<
+            Database['public']['Tables']['solicitudes']['Row'],
+            Database['public']['Tables']['solicitudes']['ComputedFields']
+          >
+          p_n: Omit<
+            Database['public']['Tables']['solicitudes']['Row'],
+            Database['public']['Tables']['solicitudes']['ComputedFields']
+          >
+        }
+        Returns: string[]
       }
       _limitar_a: { Args: { p_solicitud: string }; Returns: string }
       _mas_minutos: { Args: { p_min: number; p_t: string }; Returns: string }
@@ -931,6 +962,31 @@ export type Database = {
         Args: { p_asignado: string; p_candidatos: string[]; p_excluir: string; p_h: string }
         Returns: string[]
       }
+      _pasar_reunion: {
+        Args: {
+          p_orden: string[]
+          p_r: Omit<
+            Database['public']['Tables']['reuniones']['Row'],
+            Database['public']['Tables']['reuniones']['ComputedFields']
+          >
+        }
+        Returns: string
+      }
+      _perfil_json: {
+        Args: {
+          p_p: Omit<
+            Database['public']['Tables']['perfiles']['Row'],
+            Database['public']['Tables']['perfiles']['ComputedFields']
+          >
+        }
+        Returns: Json
+      }
+      _repartir_reuniones:
+        | { Args: { p_perfil: string; p_respaldo: string }; Returns: Json }
+        | { Args: { p_pausa: boolean; p_perfil: string; p_respaldo: string }; Returns: Json }
+      _repartir_solicitudes:
+        | { Args: { p_perfil: string }; Returns: Json }
+        | { Args: { p_pausa: boolean; p_perfil: string }; Returns: Json }
       _resumen_reunion: { Args: { p_anfitrion_anterior: string; p_reunion: string }; Returns: Json }
       _reunion_del_panel: {
         Args: { p_esperado: string; p_reunion_id: string }
@@ -984,6 +1040,41 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      _sumar_diaria: { Args: { p_columna: string; p_dia: string; p_n: number }; Returns: undefined }
+      _sumar_persona: {
+        Args: { p_columna: string; p_dia: string; p_n: number; p_perfil: string }
+        Returns: undefined
+      }
+      _tomar_correo: {
+        Args: {
+          p_desde: Database['public']['Enums']['estado_correo'][]
+          p_destino: Database['public']['Enums']['estado_correo']
+          p_id: string
+        }
+        Returns: {
+          adjunto_ics: string | null
+          creado_en: string
+          datos: NonNullable<Json>
+          enviado_en: string | null
+          estado: Database['public']['Enums']['estado_correo']
+          id: string
+          intentos: number
+          para: string
+          plantilla: string
+          programado_para: string | null
+          referencia: string | null
+          resend_id: string | null
+          reunion_id: string | null
+          solicitud_id: string | null
+          ultimo_error: string | null
+        }
+        SetofOptions: {
+          from: '*'
+          to: 'correos_salientes'
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       _transicion: {
         Args: {
           p_desde: Database['public']['Enums']['estado_solicitud']
@@ -996,6 +1087,27 @@ export type Database = {
         }[]
       }
       _validar_zona: { Args: { p_zona: string }; Returns: undefined }
+      aceptar_invitacion: { Args: Record<PropertyKey, never>; Returns: Json }
+      actualizar_meet: {
+        Args: { p_actualizado_en_esperado: string; p_enlace_meet: string }
+        Returns: Json
+      }
+      asignar_rol: {
+        Args: {
+          p_nombre?: string
+          p_rol: Database['public']['Enums']['rol_usuario']
+          p_usuario_id: string
+        }
+        Returns: Json
+      }
+      borrar_solicitud: {
+        Args: { p_actualizado_en_esperado: string; p_solicitud_id: string }
+        Returns: Json
+      }
+      cambiar_en_turno: {
+        Args: { p_actualizado_en_esperado: string; p_en_turno: boolean; p_perfil_id: string }
+        Returns: Json
+      }
       cambiar_estado_solicitud: {
         Args: {
           p_actualizado_en_esperado: string
@@ -1020,12 +1132,153 @@ export type Database = {
         Args: { p_actualizado_en_esperado: string; p_reunion_id: string }
         Returns: Json
       }
+      contar_envio: {
+        Args: { p_clave: string; p_maximo: number; p_ventana_segundos: number }
+        Returns: boolean
+      }
+      correo_por_id: { Args: { p_id: string }; Returns: Json }
+      correo_por_referencia: { Args: { p_referencia: string }; Returns: Json }
+      correos_programados_de: {
+        Args: { p_reunion_id?: string; p_solicitud_id?: string; p_tope?: number }
+        Returns: Json
+      }
+      correos_vencidos: { Args: { p_ahora: string; p_tope?: number }; Returns: Json }
+      crear_o_juntar_solicitud: {
+        Args: {
+          p_administracion?: number
+          p_autos_hoy?: number
+          p_autos_meta?: number
+          p_calc_consultas?: number
+          p_calc_margen?: number
+          p_calc_respuesta?: Database['public']['Enums']['tiempo_respuesta']
+          p_consentimiento_en: string
+          p_email: string
+          p_importadora?: string
+          p_nombre: string
+          p_origen: Database['public']['Enums']['origen_solicitud']
+          p_origenes?: string[]
+          p_pagina_origen?: string
+          p_pais?: string
+          p_ref_codigo?: string
+          p_utm_campaign?: string
+          p_utm_content?: string
+          p_utm_medium?: string
+          p_utm_source?: string
+          p_utm_term?: string
+          p_vendedores?: number
+          p_whatsapp?: string
+        }
+        Returns: Json
+      }
       datos_para_horas: { Args: { p_solicitud_id: string; p_token_hash: string }; Returns: Json }
+      desactivar_usuario: {
+        Args: { p_actualizado_en_esperado: string; p_perfil_id: string }
+        Returns: Json
+      }
+      elegir_whatsapp: {
+        Args: {
+          p_pagina?: string
+          p_utm_campaign?: string
+          p_utm_content?: string
+          p_utm_medium?: string
+          p_utm_source?: string
+          p_utm_term?: string
+        }
+        Returns: Json
+      }
       es_admin: { Args: Record<PropertyKey, never>; Returns: boolean }
       es_usuario_activo: { Args: Record<PropertyKey, never>; Returns: boolean }
+      guardar_config_agenda: {
+        Args: {
+          p_actualizado_en_esperado: string
+          p_anticipacion_min_horas: number
+          p_cancelar_hasta_horas: number
+          p_descanso_min: number
+          p_duracion_min: number
+          p_horizonte_dias: number
+          p_max_reuniones_dia: number
+        }
+        Returns: Json
+      }
+      guardar_config_calculadora: {
+        Args: {
+          p_actualizado_en_esperado: string
+          p_ciclo_dias: number
+          p_moneda_local: boolean
+          p_pct_local: number
+          p_pct_sena: number
+          p_precio: number
+          p_sena: number
+          p_sueldo: number
+          p_tasa: number
+          p_volatilidad: Database['public']['Enums']['volatilidad']
+        }
+        Returns: Json
+      }
+      guardar_horario_base: {
+        Args: { p_actualizado_en_esperado: string; p_tramos: Json }
+        Returns: Json
+      }
       ids_con_alcance: { Args: { p_clave: string }; Returns: string[] }
+      marcar_correo_cancelado: { Args: { p_id: string }; Returns: Json }
+      marcar_correo_enviado: {
+        Args: { p_enviado_en: string; p_id: string; p_intentos: number; p_resend_id?: string }
+        Returns: Json
+      }
+      marcar_correo_fallido: {
+        Args: { p_id: string; p_intentos: number; p_ultimo_error: string }
+        Returns: Json
+      }
+      marcar_correo_reprogramado: {
+        Args: {
+          p_cambiar_resend_id?: boolean
+          p_id: string
+          p_programado_para: string
+          p_resend_id?: string
+        }
+        Returns: Json
+      }
       mis_permisos: { Args: Record<PropertyKey, never>; Returns: Json }
       puede_en_solicitud: { Args: { p_clave: string; p_solicitud: string }; Returns: boolean }
+      reactivar_usuario: {
+        Args: { p_actualizado_en_esperado: string; p_perfil_id: string }
+        Returns: Json
+      }
+      reasignar_solicitud: {
+        Args: { p_actualizado_en_esperado: string; p_asignar_a: string; p_solicitud_id: string }
+        Returns: Json
+      }
+      registrar_correo: {
+        Args: {
+          p_adjunto_ics?: string
+          p_datos: Json
+          p_enviado_en?: string
+          p_estado: Database['public']['Enums']['estado_correo']
+          p_intentos?: number
+          p_para: string
+          p_plantilla: string
+          p_programado_para?: string
+          p_referencia?: string
+          p_resend_id?: string
+          p_reunion_id?: string
+          p_solicitud_id?: string
+          p_ultimo_error?: string
+        }
+        Returns: Json
+      }
+      registrar_evento: {
+        Args: {
+          p_pagina?: string
+          p_solicitud_id?: string
+          p_tipo: Database['public']['Enums']['tipo_evento']
+          p_utm_campaign?: string
+          p_utm_content?: string
+          p_utm_medium?: string
+          p_utm_source?: string
+          p_utm_term?: string
+        }
+        Returns: undefined
+      }
       reservar_reunion: {
         Args: {
           p_inicio: string
@@ -1036,6 +1289,7 @@ export type Database = {
         }
         Returns: Json
       }
+      retencion_diaria: { Args: Record<PropertyKey, never>; Returns: Json }
       tiene_permiso: { Args: { p_clave: string }; Returns: boolean }
     }
     Enums: {

@@ -459,6 +459,43 @@ test('PILOTO_AUTO: una compuerta de producto de un paso rojo se contesta al inst
   assert.match(decision, /me respondió: «autoelección por PILOTO_AUTO: P0: Al centavo»/)
 })
 
+test('PILOTO_AUTO: una compuerta afuera listada se contesta sola con la recomendada; sin listarla espera', () => {
+  const afuera = `jq -n '{paso: "P01", resultado: "compuerta", resumen: "falta algo", commits: [], e2e_dirigidos: [],
+    compuerta: {tipo: "afuera", motivo: "falta una RPC de otro carril", pregunta: "¿Publico en parte?", opciones: [{etiqueta: "seguir", descripcion: "publicar en parte (recomendado)"}, {etiqueta: "parar", descripcion: "no"}], contexto: []}}' > .piloto/ultimo.json`
+  const m = montar()
+  writeFileSync(join(m.fake, 'claude-1.sh'), afuera)
+  const r = m.carriles.datos.vuelta({ PILOTO_AUTO: 'producto,afuera', PILOTO_ESPERA_MAX: '2' })
+  assert.equal(r.status, 0, salida(r))
+  assert.ok(!existsSync(join(m.fake, 'compuerta-1.md')), 'no se abrió la sesión de decidir')
+  assert.match(
+    readFileSync(join(m.carriles.datos.comun, 'decision.md'), 'utf8'),
+    /me respondió: «autoelección por PILOTO_AUTO: seguir»/,
+  )
+  assert.match(
+    readFileSync(join(m.carriles.datos.dir, '.piloto/autoelecciones.md'), 'utf8'),
+    /P01 · compuerta afuera contestada sola \(PILOTO_AUTO\): seguir/,
+  )
+
+  const sin = montar()
+  writeFileSync(join(sin.fake, 'claude-1.sh'), afuera)
+  const r2 = sin.carriles.datos.vuelta({ PILOTO_AUTO: 'producto', PILOTO_ESPERA_MAX: '2' })
+  assert.equal(r2.status, 3, salida(r2))
+  assert.match(readFileSync(join(sin.fake, 'compuerta-1.md'), 'utf8'), /^tipo: afuera$/m)
+})
+
+test('PILOTO_AUTO: una parada listada se contesta sola con «parado» y el bucle sale sin preguntar', () => {
+  const m = montar()
+  writeFileSync(join(m.carriles.ui.bin, 'cierre.sh'), '# cambiado\n', { flag: 'a' })
+  const r = m.carriles.ui.vuelta({ PILOTO_AUTO: 'parada', PILOTO_ESPERA_MAX: '2' })
+  assert.equal(r.status, 0, salida(r))
+  assert.ok(!existsSync(join(m.fake, 'compuerta-1.md')), 'no se abrió la sesión de decidir')
+  assert.match(
+    readFileSync(join(m.carriles.ui.comun, 'decision.md'), 'utf8'),
+    /me respondió: «autoelección por PILOTO_AUTO: parado»/,
+  )
+  assert.doesNotMatch(m.llamadas(), /claude n=/)
+})
+
 test('PILOTO_AUTO: las guardas se aprueban solas y su diff queda guardado; sin PILOTO_AUTO esperan', () => {
   const tocarGuardas = `mkdir -p .github/workflows && echo 'name: x' > .github/workflows/x.yml && git add -A && git commit -qm "ci: x"
 desde=$(jq -r .head_arranque .piloto/en-curso.json)

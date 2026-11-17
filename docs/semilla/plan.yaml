@@ -148,6 +148,254 @@ pasos:
       referencia idempotente; .ics REQUEST y CANCEL con UID y SEQUENCE; tests de render y de .ics con la
       reunión de ejemplo; ficha CLAUDE.md.
 
+  # Propuesto por P06 (docs/pasos/P06/decisiones.md).
+  - id: P32
+    titulo: RPC del límite de envíos (contar_envio)
+    depende_de: [P02, P05]
+    carril: datos
+    riesgo: rojo
+    modulos: [supabase/, src/shared/types/]
+    ruteo: {agente: claude, modelo: opus, effort: xhigh, modo: plan→manual, sesion: nueva, revisor: claude-sesion-nueva}
+    verificacion: {nivel: 2, comando: "pnpm db:reset && pnpm db:types && pnpm db:probar && pnpm lint && pnpm typecheck && pnpm test"}
+    terminado: >-
+      contar_envio(p_clave, p_maximo, p_ventana_segundos) returns boolean, security definer con
+      search_path vacío, sólo service_role; ventana fija en un solo insert … on conflict … returning;
+      su prueba en supabase/tests/ con la tabla de casos de ContarEnvio; tipos regenerados.
+
+  # Propuesto por P05 (docs/pasos/P05/decisiones.md).
+  - id: P30
+    titulo: RPC de solicitudes (crear o juntar, reasignar, desactivar, borrar) y retención
+    depende_de: [P05, P32]
+    carril: datos
+    riesgo: rojo
+    modulos: [supabase/, src/shared/types/]
+    ruteo: {agente: claude, modelo: opus, effort: xhigh, modo: plan→manual, sesion: nueva, revisor: claude-sesion-nueva}
+    verificacion: {nivel: 2, comando: "pnpm db:reset && pnpm db:types && pnpm db:probar && pnpm lint && pnpm typecheck && pnpm test"}
+    terminado: >-
+      crear_o_juntar_solicitud (reparto §5.6, prospección R4.19, repetidas R4.5 con auditoría «juntada»),
+      reasignar_solicitud (R4.2, con y sin hueco), desactivar_usuario (R3.3, R4.3, reparte las abiertas),
+      borrar_solicitud (R4.17) y retencion_diaria (C2, también limpia limites de más de 2 días); claves
+      solicitudes.reasignar y solicitudes.borrar; supabase/tests/solicitudes-rpc.sql y retencion.sql.
+
+  # Propuesto por P07 (docs/pasos/P07/decisiones.md).
+  - id: P27
+    titulo: RPC del registro de correos (correos_salientes)
+    depende_de: [P02, P05, P30]
+    carril: datos
+    riesgo: rojo
+    modulos: [supabase/, src/shared/types/]
+    ruteo: {agente: claude, modelo: opus, effort: xhigh, modo: plan→manual, sesion: nueva, revisor: claude-sesion-nueva}
+    verificacion: {nivel: 2, comando: "pnpm db:reset && pnpm db:types && pnpm db:probar && pnpm lint && pnpm typecheck && pnpm test"}
+    terminado: >-
+      RPC de correos_salientes: registrar, marcar enviado, fallido, cancelado y reprogramado; leer por
+      referencia, id, reunión o solicitud, y los vencidos, con su índice de vencidos; security definer,
+      search_path vacío, sólo service_role; pruebas en supabase/tests/; tipos regenerados.
+
+  # Propuesto por P05 (docs/pasos/P05/decisiones.md).
+  - id: P31
+    titulo: RPC del Meet, WhatsApp, eventos y configuración; triggers de métricas
+    depende_de: [P05, P27]
+    carril: datos
+    riesgo: rojo
+    modulos: [supabase/, src/shared/types/]
+    ruteo: {agente: claude, modelo: opus, effort: xhigh, modo: plan→manual, sesion: nueva, revisor: claude-sesion-nueva}
+    verificacion: {nivel: 2, comando: "pnpm db:reset && pnpm db:types && pnpm db:probar && pnpm lint && pnpm typecheck && pnpm test"}
+    terminado: >-
+      actualizar_meet (R4.21), elegir_whatsapp (§5.6), registrar_evento, guardar_config_calculadora (clave
+      calculadora.configurar), los triggers de metricas_diarias y metricas_persona, la auditoría de rol y
+      config; supabase/tests/personas.sql y metricas.sql.
+
+  # Propuesto por P02 (docs/pasos/P02/decisiones.md, «Para el coordinador»), que P05 dejó pendiente.
+  - id: P34
+    titulo: RPC de usuarios, turnos, horario y fotos que quedaron sin dueño
+    depende_de: [P30, P31]
+    carril: datos
+    riesgo: rojo
+    modulos: [supabase/, src/shared/types/]
+    ruteo: {agente: claude, modelo: opus, effort: xhigh, modo: plan→manual, sesion: nueva, revisor: claude-sesion-nueva}
+    verificacion: {nivel: 2, comando: "pnpm db:reset && pnpm db:types && pnpm db:probar && pnpm lint && pnpm typecheck && pnpm test"}
+    terminado: >-
+      cambiar_en_turno, reactivar_usuario y asignar_rol; guardar_config_agenda y guardar_horario_base;
+      variantes de reasignar_solicitud y desactivar_usuario que authenticated pueda ejecutar con su
+      chequeo de permiso; crear el perfil al aceptar una invitación; el recolector de fotos huérfanas del
+      bucket equipo; los casos permitidos de las filas 9, 35, 36 y 38 de la matriz; pruebas en supabase/tests/.
+
+  # Propuesto por P07 (docs/pasos/P07/decisiones.md).
+  - id: P28
+    titulo: Adjuntos en el correo y fecha con día de la semana
+    depende_de: [P01, P06]
+    carril: base
+    riesgo: ambar
+    modulos: [src/shared/lib/]
+    ruteo: {agente: claude, modelo: sonnet, effort: high, modo: auto, sesion: nueva, revisor: ninguno}
+    verificacion: {nivel: 1, comando: "pnpm lint && pnpm typecheck && pnpm test && bash scripts/mapa.sh --check"}
+    terminado: >-
+      adjuntos en esquemaDeMensaje y en los adaptadores mailpit y resend-api; formato de fecha con día de la
+      semana en fechas.ts (§6.8: «mar 3 nov, 10:00»); tests.
+
+  # Propuesto por P06 (docs/pasos/P06/decisiones.md).
+  - id: P33
+    titulo: Enlazar el límite de envíos con su RPC
+    depende_de: [P06, P28, P32]
+    carril: base
+    riesgo: rojo
+    modulos: [src/shared/lib/seguridad/]
+    ruteo: {agente: claude, modelo: opus, effort: xhigh, modo: plan→manual, sesion: nueva, revisor: claude-sesion-nueva}
+    verificacion: {nivel: 1, comando: "pnpm lint && pnpm typecheck && pnpm test && bash scripts/mapa.sh --check"}
+    terminado: >-
+      contadorDeSupabase(cliente) implementa ContarEnvio con cliente.rpc('contar_envio', …): el cliente entra
+      por parámetro, valida la respuesta con Zod y mapea el error con errorDePostgrest; sus pruebas corren la
+      misma tabla de casos que crearContadorEnMemoria. Cierra lo pendiente del terminado de P06.
+
+  # Propuesto por P07 (docs/pasos/P07/decisiones.md).
+  - id: P29
+    titulo: Registro de correos sobre sus RPC y .ics adjunto
+    depende_de: [P07, P27, P28]
+    carril: notificaciones
+    riesgo: ambar
+    modulos: [src/modules/notificaciones/]
+    ruteo: {agente: claude, modelo: sonnet, effort: high, modo: auto, sesion: nueva, revisor: ninguno}
+    verificacion: {nivel: 1, comando: "pnpm lint && pnpm typecheck && pnpm test && bash scripts/mapa.sh --check"}
+    terminado: >-
+      Adaptador de RegistroDeCorreos sobre las RPC de correos_salientes (el cliente entra por parámetro);
+      el .ics sale adjunto (text/calendar; method=REQUEST|CANCEL); las plantillas usan la fecha con día;
+      cierra lo pendiente del terminado de P07.
+
+  # Propuesto por P01 (docs/pasos/P01/decisiones.md).
+  - id: P22
+    titulo: Layout (fuentes, tema, CSP y cabeceras, noindex)
+    depende_de: [P01]
+    carril: base
+    riesgo: rojo
+    modulos: [src/app/layout.tsx, src/app/globals.css, next.config.ts, src/shared/config/]
+    ruteo: {agente: claude, modelo: opus, effort: xhigh, modo: plan→manual, sesion: nueva, revisor: claude-sesion-nueva}
+    verificacion: {nivel: 1, comando: "pnpm lint && pnpm typecheck && pnpm test && bash scripts/mapa.sh --check"}
+    terminado: >-
+      Archivo y JetBrains Mono con next/font, tema «system» con .dark, CSP y cabeceras de §4 sin nonces
+      (las páginas públicas siguen estáticas), noindex fuera de producción; @vercel/analytics sólo si la
+      persona aprueba la dependencia nueva; tests de las cabeceras.
+
+  # Propuesto por P01 (docs/pasos/P01/decisiones.md), que P11 y P14 necesitan.
+  - id: P23
+    titulo: Cliente admin en las rutas de §9.1 y respaldos diarios
+    depende_de: [P01, P02, P22]
+    carril: base
+    riesgo: rojo
+    modulos: [eslint.config.mjs, .github/]
+    ruteo: {agente: claude, modelo: opus, effort: xhigh, modo: plan→manual, sesion: nueva, revisor: claude-sesion-nueva}
+    verificacion: {nivel: 1, comando: "pnpm lint && pnpm typecheck && pnpm test && bash scripts/mapa.sh --check"}
+    terminado: >-
+      DONDE_SE_PERMITE_EL_ADMIN con las rutas de §9.1 (públicas de agenda, cron, webhooks y acceso/infra);
+      respaldo-diario.yml y restauracion-semanal.yml (X13) con su par destinatario/identidad para CI; la
+      restauración comprueba las tablas de P02.
+
+  # Propuesto por P01 (docs/pasos/P01/decisiones.md).
+  - id: P24
+    titulo: Componentes compartidos de §8.5
+    depende_de: [P01, P22]
+    carril: base
+    riesgo: rojo
+    modulos: [src/shared/ui/]
+    ruteo: {agente: claude, modelo: opus, effort: xhigh, modo: plan→manual, sesion: nueva, revisor: claude-sesion-nueva}
+    verificacion: {nivel: 1, comando: "pnpm lint && pnpm typecheck && pnpm test && bash scripts/mapa.sh --check"}
+    terminado: >-
+      Los componentes de §8.5 en src/shared/ui (avisos con sonner, el monto con formatoUSD), con sus estados
+      de docs/UX.md y sus tests.
+
+  # Propuesto por P11 (docs/pasos/P11/decisiones.md, P2).
+  - id: P39
+    titulo: Reloj fijo del servidor en las pruebas locales
+    depende_de: [P06, P33]
+    carril: base
+    riesgo: rojo
+    modulos: [src/shared/lib/]
+    ruteo: {agente: claude, modelo: opus, effort: xhigh, modo: plan→manual, sesion: nueva, revisor: claude-sesion-nueva}
+    verificacion: {nivel: 1, comando: "pnpm lint && pnpm typecheck && pnpm test && bash scripts/mapa.sh --check"}
+    terminado: >-
+      La hora del servidor sale de un solo ayudante que, sólo en pruebas locales y e2e (TIEMPO_FIJO), devuelve
+      la hora fija; en producción es la hora real y una guarda de pnpm test lo comprueba.
+
+  # Propuesto por P01 (docs/pasos/P01/decisiones.md).
+  - id: P25
+    titulo: Logos e íconos del manifest
+    depende_de: [P01]
+    carril: base
+    riesgo: ambar
+    modulos: [public/marca/, src/app/manifest.ts]
+    ruteo: {agente: claude, modelo: sonnet, effort: high, modo: auto, sesion: nueva, revisor: ninguno}
+    verificacion: {nivel: 1, comando: "pnpm lint && pnpm typecheck && pnpm test && bash scripts/mapa.sh --check"}
+    terminado: >-
+      Logos de Calesa en public/marca e íconos del manifest. Los logos los entrega la persona: si no están,
+      el paso usa la palabra «Calesa» y lo deja anotado.
+
+  # Propuesto por P11 (docs/pasos/P11/decisiones.md, P2).
+  - id: P38
+    titulo: Reloj fijo de la base en las pruebas locales
+    depende_de: [P34]
+    carril: datos
+    riesgo: rojo
+    modulos: [supabase/, src/shared/types/]
+    ruteo: {agente: claude, modelo: opus, effort: xhigh, modo: plan→manual, sesion: nueva, revisor: claude-sesion-nueva}
+    verificacion: {nivel: 2, comando: "pnpm db:reset && pnpm db:types && pnpm db:probar && pnpm lint && pnpm typecheck && pnpm test"}
+    terminado: >-
+      public._ahora() devuelve now() salvo que exista pruebas.reloj (la busca con to_regclass), que crea sólo
+      la semilla local; las RPC usan _ahora(); una prueba de supabase/tests/ afirma _ahora() = now() sin la
+      tabla y una guarda de pnpm test cae si una migración nombra pruebas.reloj.
+
+  # Propuesto por P03 (docs/pasos/P03/decisiones.md, P2).
+  - id: P26
+    titulo: Gráfica «Crecer sin contratar»
+    depende_de: [P03]
+    carril: calculadora
+    riesgo: rojo
+    modulos: [src/modules/calculadora/features/escala/, src/modules/calculadora/client.ts]
+    ruteo: {agente: claude, modelo: opus, effort: xhigh, modo: plan→manual, sesion: nueva, revisor: claude-sesion-nueva}
+    verificacion: {nivel: 1, comando: "pnpm lint && pnpm typecheck && pnpm test && bash scripts/mapa.sh --check"}
+    terminado: >-
+      El componente de la gráfica en calculadora/features/escala/, exportado por client.ts, con los números y
+      textos de calcularEscala y textosDeEscala; estados y tests.
+
+  # Propuesto por P11 (docs/pasos/P11/decisiones.md).
+  - id: P35
+    titulo: Formulario de /agendar y /api/solicitudes
+    depende_de: [P11, P30, P33, P22, P23, P24, P26]
+    carril: ventas
+    riesgo: rojo
+    modulos: [src/modules/solicitudes/features/formulario/, src/modules/solicitudes/infra/, src/modules/solicitudes/pantallas/, src/modules/solicitudes/client.ts, src/app/agendar/, src/app/api/solicitudes/, e2e/ventas/agenda/formulario.spec.ts]
+    ruteo: {agente: claude, modelo: opus, effort: xhigh, modo: plan→manual, sesion: nueva, revisor: claude-sesion-nueva}
+    verificacion: {nivel: 1, comando: "pnpm lint && pnpm typecheck && pnpm test && bash scripts/mapa.sh --check"}
+    terminado: >-
+      /agendar paso 1 (borrador en sessionStorage, prellenado desde la calculadora, gráfica por el client.ts
+      de calculadora, aviso sin-whatsapp) y /api/solicitudes con Turnstile, límite, Zod y enlace con ref
+      limitado al creador; e2e del formulario en escritorio y movil.
+
+  # Propuesto por P11 (docs/pasos/P11/decisiones.md).
+  - id: P36
+    titulo: Horas, reserva y gestión en pantalla, con e2e de reloj fijo
+    depende_de: [P11, P35, P33, P23, P24, P38, P39]
+    carril: ventas
+    riesgo: rojo
+    modulos: [src/modules/agenda/features/, src/modules/agenda/pantallas/, src/modules/agenda/client.ts, src/app/reunion/, src/app/api/horas/, src/app/api/reservas/, e2e/ventas/agenda/gestion.spec.ts]
+    ruteo: {agente: claude, modelo: opus, effort: xhigh, modo: plan→manual, sesion: nueva, revisor: claude-sesion-nueva}
+    verificacion: {nivel: 2, comando: "pnpm lint && pnpm typecheck && pnpm test && bash scripts/mapa.sh --check && pnpm db:reset && pnpm db:probar && pnpm test:e2e:completo"}
+    terminado: >-
+      /agendar pasos 2 y 3, /reunion/[token] (cambiar, cancelar con el plazo de 2 h, «Elegir otra hora»),
+      /api/horas y /api/reservas; e2e con reloj fijo de los recorridos 1, 2, 4 y 5 de §6.1 y los estados de
+      /agendar y /reunion de §6.5. Cierra lo pendiente del terminado de P11.
+
+  # Propuesto por P12 (docs/pasos/P12/decisiones.md; allí se llamó P34, id que ya estaba tomado).
+  - id: P37
+    titulo: WhatsApp por turno y eventos (rutas y e2e)
+    depende_de: [P12, P31, P33]
+    carril: tareas
+    riesgo: ambar
+    modulos: [src/app/api/whatsapp/, src/app/api/eventos/, e2e/tareas/whatsapp.spec.ts]
+    ruteo: {agente: claude, modelo: sonnet, effort: high, modo: auto, sesion: nueva, revisor: ninguno}
+    verificacion: {nivel: 1, comando: "pnpm lint && pnpm typecheck && pnpm test && bash scripts/mapa.sh --check"}
+    terminado: >-
+      GET /api/whatsapp y POST /api/eventos sobre elegir_whatsapp y registrar_evento, con límite y Zod;
+      e2e/tareas/whatsapp.spec.ts. Cierra lo pendiente del terminado de P12.
+
   - id: P20
     titulo: Equipo y prospección (entities, lectura pública, sección «Quiénes somos»)
     depende_de: [P02]
@@ -164,7 +412,7 @@ pasos:
 
   - id: P11
     titulo: Flujo público de agenda (formulario con gráfica, horas, reserva, confirmación, gestión)
-    depende_de: [P03, P04, P05, P06, P07]
+    depende_de: [P03, P04, P05, P06, P07, P30, P33]
     carril: ventas
     riesgo: rojo
     modulos: [src/modules/agenda/features/, src/modules/agenda/infra/, src/modules/agenda/pantallas/, src/modules/agenda/client.ts, src/modules/solicitudes/features/formulario/, src/modules/solicitudes/infra/, src/modules/solicitudes/pantallas/, src/modules/solicitudes/client.ts, src/app/agendar/, src/app/reunion/, src/app/api/solicitudes/, src/app/api/reservas/, src/app/api/horas/, e2e/ventas/agenda/]
@@ -199,7 +447,7 @@ pasos:
 
   - id: P08
     titulo: Sitio público (inicio con sus 10 secciones, /planes, navegación, maquetas, ilustraciones)
-    depende_de: [P09, P20]
+    depende_de: [P09, P20, P22, P24, P25]
     carril: sitio
     riesgo: ambar
     modulos: [src/modules/sitio/, src/app/(sitio)/layout.tsx, src/app/(sitio)/page.tsx, src/app/(sitio)/planes/, public/media/, public/ilustraciones/, e2e/sitio/inicio.spec.ts]
@@ -215,7 +463,7 @@ pasos:
 
   - id: P10
     titulo: Privacidad, términos (borrador) y pie legal
-    depende_de: [P08]
+    depende_de: [P08, P22, P24]
     carril: sitio
     riesgo: rojo
     modulos: [src/app/(sitio)/privacidad/, src/app/(sitio)/terminos/, src/modules/sitio/legal/, e2e/sitio/legal.spec.ts]
@@ -229,7 +477,7 @@ pasos:
 
   - id: P12
     titulo: Medición, botón de WhatsApp por turno y registro de eventos
-    depende_de: [P05, P06]
+    depende_de: [P05, P06, P31, P33]
     carril: tareas
     riesgo: ambar
     modulos: [src/modules/medicion/, src/app/api/whatsapp/, src/app/api/eventos/, e2e/tareas/whatsapp.spec.ts]
@@ -245,7 +493,7 @@ pasos:
 
   - id: P13
     titulo: Tarea diaria (retención, reintentos, limpieza, cupos) y webhook de Resend
-    depende_de: [P05, P06, P07, P12]
+    depende_de: [P05, P06, P07, P12, P30, P23, P38, P39]
     carril: tareas
     riesgo: rojo
     modulos: [vercel.json, src/app/api/cron/, src/app/api/webhooks/, e2e/tareas/diario.spec.ts]
@@ -260,7 +508,7 @@ pasos:
 
   - id: P14
     titulo: Acceso al panel (entrar, permisos, invitaciones, usuarios, perfil, marco, resumen, actividad)
-    depende_de: [P02, P05, P06, P07, P12]
+    depende_de: [P02, P05, P06, P07, P12, P30, P31, P34, P22, P24]
     carril: acceso
     riesgo: rojo
     modulos: [src/modules/acceso/, src/proxy.ts, src/app/(app)/layout.tsx, src/app/(app)/_shell/, src/app/(app)/panel/page.tsx, src/app/(app)/panel/usuarios/, src/app/(app)/panel/perfil/, src/app/(app)/panel/actividad/, src/app/entrar/, e2e/acceso/]
@@ -278,7 +526,7 @@ pasos:
 
   - id: P15
     titulo: Panel de ventas (solicitudes, notas, reuniones, disponibilidad y bloqueos)
-    depende_de: [P14, P11]
+    depende_de: [P14, P11, P30, P34, P22, P24, P36]
     carril: ventas
     riesgo: ambar
     modulos: [src/modules/solicitudes/features/panel/, src/modules/agenda/features/panel/, src/app/(app)/panel/solicitudes/, src/app/(app)/panel/reuniones/, src/app/(app)/panel/disponibilidad/, e2e/ventas/panel/]
@@ -295,7 +543,7 @@ pasos:
 
   - id: P16
     titulo: Panel de equipo y prospección
-    depende_de: [P14, P20]
+    depende_de: [P14, P20, P22, P24]
     carril: equipo
     riesgo: rojo
     modulos: [src/modules/prospeccion/features/, src/modules/prospeccion/infra/, src/modules/prospeccion/pantallas/, src/app/(app)/panel/equipo/, src/app/(app)/panel/prospeccion/, e2e/equipo/]
@@ -311,7 +559,7 @@ pasos:
 
   - id: P21
     titulo: Panel de datos de la calculadora
-    depende_de: [P14, P09]
+    depende_de: [P14, P09, P31, P22, P24]
     carril: calculadora
     riesgo: rojo
     modulos: [src/modules/calculadora/features/panel/, src/app/(app)/panel/calculadora/, e2e/calculadora/panel.spec.ts]
@@ -325,7 +573,7 @@ pasos:
 
   - id: P17
     titulo: SEO, imagen para compartir, sitemap, datos estructurados y oyente de eventos
-    depende_de: [P10, P12]
+    depende_de: [P10, P12, P22, P24, P25]
     carril: sitio
     riesgo: verde
     modulos: [src/app/sitemap.ts, src/app/robots.ts, src/app/opengraph-image.tsx, src/app/(sitio)/layout.tsx, src/modules/sitio/seo/, e2e/sitio/seo.spec.ts]
@@ -340,7 +588,7 @@ pasos:
 
   - id: P18
     titulo: Calidad completa (flujos de punta a punta, accesibilidad, rendimiento con volumen)
-    depende_de: [P13, P15, P16, P17, P21]
+    depende_de: [P13, P15, P16, P17, P21, P29]
     carril: calidad
     riesgo: ambar
     modulos: [e2e/flujos/, e2e/rendimiento/, e2e/accesibilidad/]
@@ -354,7 +602,7 @@ pasos:
 
   - id: P19
     titulo: Lanzamiento (Supabase, Resend y DNS, variables, respaldos, legal aprobado, despliegue)
-    depende_de: [P18]
+    depende_de: [P18, P23]
     carril: lanzamiento
     riesgo: rojo
     modulos: [infra/, docs/]

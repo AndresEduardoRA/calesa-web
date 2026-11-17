@@ -5,6 +5,7 @@ import {
   desfases,
   estadoInicial,
   fraccionDeCuota,
+  integradosEnMain,
   integraSolo,
   leerConsumo,
   leerPlan,
@@ -98,6 +99,34 @@ test('orden topológico y camino crítico', () => {
   assert.equal(largo.get('P01'), 4) // P01 → P03 → P04 → P05
   assert.equal(largo.get('P02'), 2)
   assert.equal(largo.get('P03'), 3)
+})
+
+test('un plan más viejo no borra el estado de los pasos que sumó uno más nuevo', () => {
+  const previo = {
+    pasos: { P01: { estado: 'integrado' }, P99: { estado: 'asignado', carril: 'datos' } },
+  }
+  const e = estadoInicial(PLAN, previo)
+  assert.deepEqual(e.pasos.P99, { estado: 'asignado', carril: 'datos' })
+  assert.deepEqual(e.pasos.P01, { estado: 'integrado' })
+  assert.equal(e.pasos.P03.estado, 'pendiente')
+})
+
+test('un paso cuyo PR entró a main está integrado aunque su estado se haya perdido', () => {
+  const enMain = integradosEnMain(
+    'P03 · Pantalla (#12)\nMerge pull request #9 from x/kit\nP01 · Esquema (#7)\nP01 · Esquema (#2)\n',
+  )
+  assert.deepEqual(
+    [...enMain],
+    [
+      ['P03', 12],
+      ['P01', 7],
+    ],
+  )
+  const e = estadoInicial(PLAN, { pasos: { P01: { estado: 'integrado', pr: 7 } } }, enMain)
+  assert.deepEqual(e.pasos.P01, { estado: 'integrado', pr: 7 })
+  assert.equal(e.pasos.P03.estado, 'integrado')
+  assert.equal(e.pasos.P03.pr, 12)
+  assert.equal(e.pasos.P02.estado, 'pendiente')
 })
 
 test('al principio sólo arranca P01; el otro carril espera', () => {

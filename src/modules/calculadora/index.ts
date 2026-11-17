@@ -7,6 +7,7 @@ export {
   type TiempoRespuesta,
 } from './entities/entradas'
 export {
+  ETIQUETA_DE_CONFIG,
   VOLATILIDADES,
   esquemaConfigCalculadora,
   type ConfigCalculadora,

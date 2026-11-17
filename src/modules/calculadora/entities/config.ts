@@ -1,4 +1,7 @@
 import { z } from 'zod'
+
+import { fallo, MENSAJE_INESPERADO, ok, type Resultado } from '@/shared/lib/errores'
+
 import { campoEntero, campoMonto } from './rangos'
 
 // Los datos del panel que usa la calculadora (`config_calculadora`, semilla §3 y §5.2). Las claves son las columnas de la tabla, así
@@ -20,3 +23,14 @@ export const esquemaConfigCalculadora = z.object({
 })
 
 export type ConfigCalculadora = z.infer<typeof esquemaConfigCalculadora>
+
+// La etiqueta de la caché de la lectura pública (`infra/queries/config-publica.ts`). La invalida el panel al guardar (P21).
+export const ETIQUETA_DE_CONFIG = 'calculadora'
+
+// La respuesta de `publico.config_calculadora()`, que llega sin tipo (`db:types` no genera el esquema `publico`): sirve sólo un
+// arreglo con exactamente una fila válida. Cualquier otra cosa es un error nuestro, no algo que el visitante pueda arreglar.
+export function leerFilaDeConfig(datos: unknown): Resultado<ConfigCalculadora> {
+  if (!Array.isArray(datos) || datos.length !== 1) return fallo('inesperado', MENSAJE_INESPERADO)
+  const fila = esquemaConfigCalculadora.safeParse(datos[0])
+  return fila.success ? ok(fila.data) : fallo('inesperado', MENSAJE_INESPERADO)
+}

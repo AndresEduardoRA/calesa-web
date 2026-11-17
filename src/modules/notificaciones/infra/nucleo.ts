@@ -70,6 +70,7 @@ function armar(
       asunto: dibujado.asunto,
       html: dibujado.html,
       texto: dibujado.texto,
+      ...(dibujado.adjunto ? { adjuntos: [dibujado.adjunto] } : {}),
       etiquetas: { plantilla: datos.plantilla },
       referencia,
     },

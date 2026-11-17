@@ -42,6 +42,7 @@ function errorDeResend(status: number, nombre: string): Resultado<never> {
 function cuerpoDeEnvio(mensaje: MensajeDeEmail, remitente: Remitente) {
   const nombre = remitente.nombre.replace(/[<>"]/g, '').trim()
   const etiquetas = Object.entries(mensaje.etiquetas ?? {})
+  const adjuntos = mensaje.adjuntos ?? []
   return {
     from: nombre ? `${nombre} <${remitente.email}>` : remitente.email,
     to: destinatarios(mensaje.para),
@@ -49,6 +50,14 @@ function cuerpoDeEnvio(mensaje: MensajeDeEmail, remitente: Remitente) {
     html: mensaje.html,
     text: mensaje.texto,
     // Resend sólo admite letras, números, `_` y `-` en las etiquetas: el `.` (`v1.2`) va como `_`.
+    // `content` en base64 (string) y `content_type` con sus parámetros (`text/calendar; method=REQUEST`).
+    ...(adjuntos.length > 0 && {
+      attachments: adjuntos.map((a) => ({
+        filename: a.nombre,
+        content: a.contenido,
+        content_type: a.tipo,
+      })),
+    }),
     ...(etiquetas.length > 0 && {
       tags: etiquetas.map(([name, valor]) => ({ name, value: valor.replaceAll('.', '_') })),
     }),
