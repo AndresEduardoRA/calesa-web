@@ -1,4 +1,4 @@
-// Entrada de servidor de `notificaciones`: las 12 plantillas de correo (§6.8), el .ics, las referencias y los momentos de los recordatorios.
+// Entrada de servidor de `notificaciones`: las 12 plantillas de correo (§6.8), el .ics, las referencias, los momentos de los recordatorios y el notificador (enviar, programar, cancelar, reprogramar).
 import 'server-only'
 
 export { PLANTILLAS, esquemaDatos } from './entities/datos'
@@ -10,3 +10,16 @@ export { armarIcs } from './entities/ics'
 export { momentosDeRecordatorio } from './entities/recordatorios'
 export type { MomentosDeRecordatorio } from './entities/recordatorios'
 export { referenciaDe } from './entities/referencia'
+export { crearNotificador } from './infra/notificador'
+export type { Notificador, OpcionesDelNotificador } from './infra/notificador'
+export type { PuertoDeCorreo } from './infra/correo'
+export type { ResultadoDeEnvio } from './infra/nucleo'
+export type { ResultadoDeCancelacion } from './infra/cancelar'
+export type { ResultadoDelDespacho } from './infra/enviar'
+export type {
+  EstadoDeCorreo,
+  FilaDeCorreo,
+  NuevaFila,
+  Quien,
+  RegistroDeCorreos,
+} from './entities/registro'
