@@ -92,4 +92,6 @@ src/modules/medicion/, src/app/api/cron/, src/app/api/webhooks/, e2e/tareas/diar
   500 y Resend reintenta; uno más viejo, 200. Riesgo aceptado: un fallo que llega más de 10 min antes que su fila queda sin marcar.
 - **El cron responde 500 con el resumen si un paso falla**, para que la corrida quede en los logs de Vercel (F10). Si verificar el
   secreto lanza (entorno inválido), 500 sin correr.
+- **El tope de 64 KB del webhook** se mira en `content-length` y en los bytes leídos. Un cuerpo sin `content-length` (chunked) se lee
+  entero antes de cortar: lo acota el límite de cuerpo de Vercel, y P42 puede leerlo por partes cuando tenga la ruta.
 - **La retención se vuelve a llamar mientras `quedanMas`**, hasta 5 veces por corrida; lo que quede, lo sigue la próxima.
