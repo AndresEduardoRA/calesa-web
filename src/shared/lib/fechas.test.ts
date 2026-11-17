@@ -6,6 +6,7 @@ import {
   sumarDias,
   fechaRelativa,
   formatearFecha,
+  formatearFechaConDia,
   formatearFechaHora,
   formatearHora,
   inicioDelDia,
@@ -112,5 +113,31 @@ describe('días del calendario', () => {
     expect(formatearDiaYMes('2026-01-05')).toBe('05/01')
     expect(formatearDiaYMes('no es una fecha')).toBe('')
     expect(formatearDiaYMes('2026-10-15T10:00:00Z')).toBe('')
+  })
+})
+
+describe('fecha con día de la semana (§6.8)', () => {
+  it('dice «mar 3 nov, 10:00» en la hora del proyecto', () => {
+    // 14:00 UTC del 3 de nov de 2026 (martes) son las 10:00 en La Paz (UTC-4)
+    expect(formatearFechaConDia('2026-11-03T14:00:00Z')).toBe('mar 3 nov, 10:00')
+  })
+
+  it('cuenta el día de La Paz, no el de UTC, y cruza la medianoche', () => {
+    // 02:30 UTC del miércoles 4 todavía es el martes 3 a las 22:30 en La Paz
+    expect(formatearFechaConDia('2026-11-04T02:30:00Z')).toBe('mar 3 nov, 22:30')
+    expect(formatearFechaConDia('2026-11-04T02:30:00Z', { zona: 'UTC' })).toBe('mié 4 nov, 02:30')
+  })
+
+  it('abrevia los siete días en español, sin punto', () => {
+    const dias = ['lun', 'mar', 'mié', 'jue', 'vie', 'sáb', 'dom']
+    dias.forEach((dia, i) => {
+      // 2026-11-02 es lunes; 16:00 UTC = 12:00 en La Paz
+      const iso = `2026-11-0${String(2 + i)}T16:00:00Z`
+      expect(formatearFechaConDia(iso)).toBe(`${dia} ${String(2 + i)} nov, 12:00`)
+    })
+  })
+
+  it('una fecha sin hora es su día, a las 00:00', () => {
+    expect(formatearFechaConDia('2026-11-03')).toBe('mar 3 nov, 00:00')
   })
 })

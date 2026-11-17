@@ -6,6 +6,7 @@ import { destinatarios, type AdaptadorDeEmail } from '../tipos'
 export function crearAdaptadorMailpit(url: string, pedir: typeof fetch = fetch): AdaptadorDeEmail {
   const destino = `${url.replace(/\/+$/, '')}/api/v1/send`
   return async (mensaje, remitente) => {
+    const adjuntos = mensaje.adjuntos ?? []
     let respuesta: Response
     try {
       respuesta = await pedir(destino, {
@@ -20,6 +21,14 @@ export function crearAdaptadorMailpit(url: string, pedir: typeof fetch = fetch):
           Tags: Object.entries(mensaje.etiquetas ?? {}).map(
             ([clave, valor]) => `${clave}:${valor}`,
           ),
+          // Mailpit: `Content` en base64, `Filename` y `ContentType`.
+          ...(adjuntos.length > 0 && {
+            Attachments: adjuntos.map((a) => ({
+              Content: a.contenido,
+              Filename: a.nombre,
+              ContentType: a.tipo,
+            })),
+          }),
         }),
       })
     } catch {

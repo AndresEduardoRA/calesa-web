@@ -227,3 +227,48 @@ describe('los errores de Resend son valores, sin la clave ni el cuerpo', () => {
     }
   })
 })
+
+describe('el adaptador de Resend con adjuntos (attachments de send-email)', () => {
+  const ics = 'BEGIN:VCALENDAR\r\nMETHOD:CANCEL\r\nEND:VCALENDAR\r\n'
+  const adjunto = {
+    nombre: 'demo.ics',
+    tipo: 'text/calendar; method=CANCEL',
+    contenido: Buffer.from(ics).toString('base64'),
+  }
+  const esperado = [
+    {
+      filename: 'demo.ics',
+      content: Buffer.from(ics).toString('base64'),
+      content_type: 'text/calendar; method=CANCEL',
+    },
+  ]
+
+  it('enviar manda attachments con filename, content en base64 y content_type', async () => {
+    const { pedir, llamadas } = pedidoSimulado(Response.json({ id: ID }))
+    await crearAdaptadorResend(CLAVE, pedir).enviar({ ...mensaje, adjuntos: [adjunto] }, remitente)
+    expect(llamadas[0]?.cuerpo).toEqual({ ...cuerpoDeEnvio, attachments: esperado })
+  })
+
+  it('programar manda lo mismo, con scheduled_at', async () => {
+    const { pedir, llamadas } = pedidoSimulado(Response.json({ id: ID }))
+    await crearAdaptadorResend(CLAVE, pedir).programar(
+      { ...mensaje, adjuntos: [adjunto] },
+      remitente,
+      CUANDO,
+    )
+    expect(llamadas[0]?.cuerpo).toEqual({
+      ...cuerpoDeEnvio,
+      attachments: esperado,
+      scheduled_at: CUANDO,
+    })
+  })
+
+  it('sin adjuntos (o con la lista vacía) el cuerpo no lleva attachments', async () => {
+    const { pedir, llamadas } = pedidoSimulado(Response.json({ id: ID }))
+    const adaptador = crearAdaptadorResend(CLAVE, pedir)
+    await adaptador.enviar(mensaje, remitente)
+    await adaptador.enviar({ ...mensaje, adjuntos: [] }, remitente)
+    expect(llamadas[0]?.cuerpo).not.toHaveProperty('attachments')
+    expect(llamadas[1]?.cuerpo).not.toHaveProperty('attachments')
+  })
+})
