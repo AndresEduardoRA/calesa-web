@@ -125,7 +125,9 @@ begin
       ('public.es_admin()', true), ('public.puede_en_solicitud(uuid, text)', true), ('public.mis_permisos()', true),
       ('public._columna_cambiada(jsonb, jsonb, text[])', true), ('public._mas_minutos(timestamptz, integer)', true),
       ('public._proteger_solicitudes()', false), ('public._proteger_perfiles()', false), ('public._proteger_reuniones()', false),
-      ('public._tocar_actualizado_en()', false)
+      ('public._tocar_actualizado_en()', false), ('public._validar_estado_solicitud()', false),
+      ('public._efecto_en_reunion()', false), ('public._auditar_solicitud()', false), ('public._auditar_reunion()', false),
+      ('public._fallar(text)', false)
     ) t (f, autenticado) loop
     if has_function_privilege('authenticated', c.f, 'execute') is distinct from c.autenticado then
       raise exception 'authenticated % ejecutar %', case when c.autenticado then 'no puede' else 'puede' end, c.f;

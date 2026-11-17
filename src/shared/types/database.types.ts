@@ -856,7 +856,27 @@ export type Database = {
         Args: { p_antes: Json; p_despues: Json; p_permitidas: string[] }
         Returns: string
       }
+      _fallar: { Args: { p_e: string }; Returns: undefined }
       _mas_minutos: { Args: { p_min: number; p_t: string }; Returns: string }
+      _transicion: {
+        Args: {
+          p_desde: Database['public']['Enums']['estado_solicitud']
+          p_hacia: Database['public']['Enums']['estado_solicitud']
+        }
+        Returns: {
+          actores: string[]
+          efecto: Database['public']['Enums']['estado_reunion']
+          solo_despues_del_inicio: boolean
+        }[]
+      }
+      cambiar_estado_solicitud: {
+        Args: {
+          p_actualizado_en_esperado: string
+          p_estado: Database['public']['Enums']['estado_solicitud']
+          p_solicitud_id: string
+        }
+        Returns: Json
+      }
       es_admin: { Args: Record<PropertyKey, never>; Returns: boolean }
       es_usuario_activo: { Args: Record<PropertyKey, never>; Returns: boolean }
       ids_con_alcance: { Args: { p_clave: string }; Returns: string[] }
