@@ -5,7 +5,7 @@ Las 12 plantillas de correo de §6.8 (con marca y modo texto), el .ics de una re
 ## Entra y sale
 
 - Entra: nada de otros módulos. Los datos llegan armados (la calculadora entrega textos ya formateados; la agenda, la reunión). `infra/` usa `src/shared/lib/email` y `src/shared/config`.
-- Sale (`index.ts`, sólo servidor): `crearNotificador` (enviarAhora, programar, cancelar, cancelarDeReunion, cancelarDeSolicitud, reprogramar, reintentar, despacharVencidos), `renderizar`, `armarIcs`, `momentosDeRecordatorio`, `referenciaDe`, `PLANTILLAS`, `esquemaDatos` y sus tipos (incluida la interfaz `RegistroDeCorreos`).
+- Sale (`index.ts`, sólo servidor): `crearNotificador` (enviarAhora, programar, cancelar, cancelarDeReunion, cancelarDeSolicitud, reprogramar, reintentar, despacharVencidos), `renderizar`, `armarIcs`, `momentosDeRecordatorio`, `referenciaDe`, `registroDeSupabase` (y su `ClienteDeCorreos`), `PLANTILLAS`, `esquemaDatos` y sus tipos (incluida la interfaz `RegistroDeCorreos`).
 - Tablas: `correos_salientes` (dueño), siempre por la interfaz `RegistroDeCorreos`; sólo se escribe por RPC (§3), ver «Ojo».
 
 ## Archivos clave
@@ -19,6 +19,8 @@ Las 12 plantillas de correo de §6.8 (con marca y modo texto), el .ics de una re
 - `entities/adjunto-ics.ts` — el .ics como adjunto (`text/calendar; method=REQUEST|CANCEL`, UTF-8 en base64); `renderizar` lo devuelve y `armar()` (`infra/nucleo.ts`) lo pone en el mensaje.
 - `entities/referencia.ts` — la clave idempotente de cada correo.
 - `entities/registro.ts` — la interfaz `RegistroDeCorreos` (tipos); `entities/reintentos.ts` — 3 intentos, esperas de 300 y 900 ms, sólo se reintenta `inesperado`.
+- `infra/registro-de-supabase.ts` — `registroDeSupabase(cliente)`: `RegistroDeCorreos` sobre las 9 RPC de `correos_salientes` (P27); el cliente (`ClienteDeCorreos`, el admin) entra por parámetro. `infra/fila-de-correo.ts` valida lo que contestan con Zod y normaliza las horas a `toISOString()`.
+- `infra/casos-del-registro.soporte.ts` — la tabla de casos de `RegistroDeCorreos`: la corren `RegistroEnMemoria` y el adaptador (con `cliente-de-correos.soporte.ts`, un cliente falso sobre la memoria); `supabase/tests/correos-*.sql` es su copia en la base.
 - `infra/notificador.ts` — compone `enviar.ts`, `programar.ts` y `cancelar.ts` sobre `enviarEmail()` y compañía (`infra/correo.ts`, el único que lee el entorno).
 - `infra/*.soporte.ts` — registro y correo falsos de las pruebas; no salen por `index.ts`.
 
@@ -36,7 +38,8 @@ Las 12 plantillas de correo de §6.8 (con marca y modo texto), el .ics de una re
 
 ## Ojo
 
-- **El `terminado` de P07 está cumplido en parte.** Cada correo se registra contra la interfaz `RegistroDeCorreos` y las pruebas usan uno en memoria: la base se escribe sólo por RPC (§3) y no hay ninguna todavía. El adaptador sobre las RPC es el paso P29 (tras P27, RPC de `correos_salientes`, del carril `datos`).
+- **El registro se cablea por petición, en la ruta:** `crearNotificador({ registro: registroDeSupabase(admin), … })`, con el admin (`service_role`: es lo único que ejecuta las RPC) y nunca en un `const` de módulo. Quien lo cablea suma su archivo a `DONDE_SE_PERMITE_EL_ADMIN`. Con otro cliente, `42501` da `sin_permiso` y `enviarAhora` y `programar` frenan antes de mandar.
+- Un error de la RPC se registra en una línea (`notificaciones: <rpc> <código>`), sin argumentos ni texto. Pasan tal cual los textos de `23505`, `22023` y `P0001` (escritos para la persona, sin datos); cualquier otro código sale con el texto del kit o el genérico de `sin_permiso`.
 - El .ics sale adjunto en todo camino que arma el correo (enviar, programar, reintentar, despachar). `adjunto_ics` guarda el texto del primero (CRLF), no el base64; un reenvío lo vuelve a dibujar desde `datos` (mismo UID y `SEQUENCE`, `DTSTAMP` nuevo). `reprogramar` con `resendId` sólo cambia la hora en el proveedor: no vuelve a armar ni a mandar el correo.
 - Quien programa debe cancelar los de la secuencia vieja y programar los nuevos al cambiar una reunión. Los recordatorios llevan el hash del enlace de Meet en su referencia: si cambia el enlace (R4.21), el recordatorio nuevo no choca con el cancelado.
 - Un correo programado en Resend que ya salió sigue `programado` en el registro hasta que P13 (webhook) lo marque.

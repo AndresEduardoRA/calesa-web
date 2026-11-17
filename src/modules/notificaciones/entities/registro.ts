@@ -1,5 +1,5 @@
 // El registro de correos (`correos_salientes`, X6) como interfaz: lo que `infra/` necesita saber de dónde se guardan los correos. La base
-// sólo se escribe por RPC (§3), y las RPC no existen todavía (P27): el adaptador sobre ellas es de P29. Sólo tipos.
+// sólo se escribe por RPC (§3): el adaptador sobre las de P27 es `registroDeSupabase` (`infra/`, P29). Sólo tipos.
 import type { Resultado } from '@/shared/lib/errores'
 
 export type EstadoDeCorreo = 'enviado' | 'programado' | 'cancelado' | 'fallido'

@@ -1,8 +1,14 @@
 // El registro de correos y el correo falsos de las pruebas (no salen por `index.ts`). El registro en memoria cumple la misma interfaz que
-// tendrá el adaptador sobre las RPC (P29).
+// tiene el adaptador sobre las RPC (`registroDeSupabase`, P29), y sigue a P27: la tabla de transiciones, el orden y los textos.
 import { fallo, ok, type Resultado } from '@/shared/lib/errores'
 import type { EnvioDeEmail, MensajeDeEmail } from '@/shared/lib/email/tipos'
-import type { FilaDeCorreo, NuevaFila, Quien, RegistroDeCorreos } from '../entities/registro'
+import type {
+  EstadoDeCorreo,
+  FilaDeCorreo,
+  NuevaFila,
+  Quien,
+  RegistroDeCorreos,
+} from '../entities/registro'
 import type { PuertoDeCorreo } from './correo'
 
 export class RegistroEnMemoria implements RegistroDeCorreos {
@@ -40,10 +46,19 @@ export class RegistroEnMemoria implements RegistroDeCorreos {
     return [...this.filas.values()].filter((f) => f.plantilla === plantilla)
   }
 
-  private cambiar(id: string, cambios: Partial<FilaDeCorreo>): Resultado<FilaDeCorreo> {
+  // La tabla de transiciones de P27 (`_tomar_correo`): desde `programado` o `fallido` caben las cuatro marcas; `enviado` es terminal;
+  // `cancelado` sólo vuelve a cancelarse, sin cambios.
+  private cambiar(
+    id: string,
+    destino: EstadoDeCorreo,
+    cambios: Partial<FilaDeCorreo>,
+  ): Resultado<FilaDeCorreo> {
     const fila = this.filas.get(id)
     if (!fila) return fallo('no_encontrado', 'No se encontró el correo.')
-    const nueva = { ...fila, ...cambios }
+    if (fila.estado === 'cancelado' && destino === 'cancelado') return ok(fila)
+    if (fila.estado === 'enviado' || fila.estado === 'cancelado')
+      return fallo('regla', `Un correo ${fila.estado} no pasa a ${destino}.`)
+    const nueva = { ...fila, ...cambios, estado: destino }
     this.filas.set(id, nueva)
     return ok(nueva)
   }
@@ -60,34 +75,42 @@ export class RegistroEnMemoria implements RegistroDeCorreos {
 
   registrar(nueva: NuevaFila) {
     if (this.fallar.registrar) return Promise.resolve(fallo('inesperado', 'registro caído'))
+    if (nueva.estado === 'cancelado')
+      return Promise.resolve(fallo('regla', 'Un dato del correo no es válido.'))
     if (nueva.referencia && [...this.filas.values()].some((f) => f.referencia === nueva.referencia))
-      return Promise.resolve(fallo('duplicado', 'Ya existe un registro con esos datos.'))
+      return Promise.resolve(fallo('duplicado', 'Ya existe un correo con esa referencia.'))
     const fila = { ...nueva, id: this.nuevoId() }
     this.filas.set(fila.id, fila)
     return Promise.resolve(ok(fila))
   }
 
   marcarEnviado(id: string, d: { resendId: string | null; intentos: number; enviadoEn: string }) {
-    return Promise.resolve(this.cambiar(id, { ...d, estado: 'enviado', ultimoError: null }))
+    return Promise.resolve(this.cambiar(id, 'enviado', { ...d, ultimoError: null }))
   }
 
   marcarFallido(id: string, d: { intentos: number; ultimoError: string }) {
-    return Promise.resolve(this.cambiar(id, { ...d, estado: 'fallido' }))
+    return Promise.resolve(this.cambiar(id, 'fallido', d))
   }
 
   marcarCancelado(id: string) {
-    return Promise.resolve(this.cambiar(id, { estado: 'cancelado' }))
+    return Promise.resolve(this.cambiar(id, 'cancelado', {}))
   }
 
   marcarReprogramado(id: string, programadoPara: string, resendId?: string | null) {
     return Promise.resolve(
-      this.cambiar(id, {
-        estado: 'programado',
+      this.cambiar(id, 'programado', {
         programadoPara,
         ultimoError: null,
         ...(resendId === undefined ? {} : { resendId }),
       }),
     )
+  }
+
+  // Como las RPC: por hora y, a igual hora, por id (lo que no tiene hora, al final); y se corta después de ordenar.
+  private ordenadas(filas: FilaDeCorreo[], tope: number): FilaDeCorreo[] {
+    const hora = (f: FilaDeCorreo) =>
+      f.programadoPara === null ? Infinity : Date.parse(f.programadoPara)
+    return filas.sort((a, b) => hora(a) - hora(b) || a.id.localeCompare(b.id)).slice(0, tope)
   }
 
   programadosDe(quien: Quien, tope: number) {
@@ -98,15 +121,14 @@ export class RegistroEnMemoria implements RegistroDeCorreos {
           ? f.reunionId === quien.reunionId
           : f.solicitudId === quien.solicitudId,
       )
-    return Promise.resolve(ok(filas.slice(0, tope)))
+    return Promise.resolve(ok(this.ordenadas(filas, tope)))
   }
 
   vencidos(ahora: string, tope: number) {
     const filas = [...this.filas.values()]
       .filter((f) => f.estado === 'programado' && f.resendId === null)
       .filter((f) => f.programadoPara !== null && Date.parse(f.programadoPara) <= Date.parse(ahora))
-      .sort((a, b) => Date.parse(a.programadoPara ?? '') - Date.parse(b.programadoPara ?? ''))
-    return Promise.resolve(ok(filas.slice(0, tope)))
+    return Promise.resolve(ok(this.ordenadas(filas, tope)))
   }
 }
 
