@@ -12,8 +12,8 @@ begin
   r := public.reservar_reunion(pruebas.solicitud('00000000-0000-4000-8000-000000000003'), null, pruebas.hora(3, '09:00'),
     'America/La_Paz', pruebas.token('c1'));
   r := public.cambiar_reunion(pruebas.token('c1'), pruebas.hora(3, '11:00'), (r #>> '{reunion,actualizadoEn}')::timestamptz);
-  if (r #>> '{anfitrion,id}')::uuid is distinct from '00000000-0000-4000-8000-000000000003' or r #>> '{reunion,secuenciaIcs}' <> '1'
-     or (r #>> '{reunion,inicio}')::timestamptz <> pruebas.hora(3, '11:00') or r -> 'anfitrionAnterior' <> 'null' then
+  if (r #>> '{anfitrion,id}')::uuid is distinct from '00000000-0000-4000-8000-000000000003' or r #>> '{reunion,secuenciaIcs}' is distinct from '1'
+     or (r #>> '{reunion,inicio}')::timestamptz is distinct from pruebas.hora(3, '11:00') or r -> 'anfitrionAnterior' is distinct from 'null' then
     raise exception 'el cambio no mantuvo al anfitrión: %', r;
   end if;
   if not exists (select 1 from public.auditoria where accion = 'reagenda' and registro_id = (r #>> '{reunion,id}')::uuid) then
@@ -126,7 +126,7 @@ begin
   perform pruebas.abrir_agenda();
   r := public.reservar_reunion(v_s, null, pruebas.hora(3, '09:00'), 'America/La_Paz', pruebas.token('canc'));
   r := public.cancelar_reunion(pruebas.token('canc'), (r #>> '{reunion,actualizadoEn}')::timestamptz);
-  if r #>> '{reunion,estado}' is distinct from 'cancelada' or (select estado from public.solicitudes where id = v_s) <> 'nueva'
+  if r #>> '{reunion,estado}' is distinct from 'cancelada' or (select estado from public.solicitudes where id = v_s) is distinct from 'nueva'
      or not exists (select 1 from public.auditoria where accion = 'cancelacion' and actor_id is null
                      and registro_id = (r #>> '{reunion,id}')::uuid) then
     raise exception 'la cancelación no dejó lo esperado: %', r;

@@ -48,6 +48,15 @@ begin
     'Este enlace no es válido.');
   perform pruebas.error('token inexistente', 'service_role', format('select public.datos_para_horas(null, %L)',
     pruebas.token('no-existe')), 'P0001', 'Este enlace no es válido.');
+  if (d #>> '{reunion,cambiableHasta}')::timestamptz is distinct from pruebas.hora(3, '09:00') - interval '2 hours' then
+    raise exception 'cambiableHasta no es el inicio menos cancelar_hasta_horas: %', d;
+  end if;
+  perform public.cancelar_reunion(pruebas.token('dph'), (r #>> '{reunion,actualizadoEn}')::timestamptz);
+  d := public.datos_para_horas(null, pruebas.token('dph'));
+  if d #>> '{reunion,estado}' is distinct from 'cancelada' or d #>> '{reunion,puedeVolverAReservar}' is distinct from 'true'
+     or d -> 'excluirReunionId' is distinct from 'null' then
+    raise exception 'datos_para_horas de una reunión cancelada no es el esperado: %', d;
+  end if;
   perform pruebas.caso('ninguna entrada', 'service_role', 'select public.datos_para_horas(null, null)', 'error=22023:p_solicitud_id');
 end $$;
 rollback;

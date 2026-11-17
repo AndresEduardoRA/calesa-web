@@ -138,28 +138,28 @@ declare
   a record;
 begin
   select * into a from public.auditoria where accion = 'estado' and registro_id = v_s1 and creado_en = now();
-  if a is null or a.actor_id is distinct from '00000000-0000-4000-8000-000000000002'::uuid or a.tabla <> 'solicitudes'
-     or a.antes <> '{"estado": "agendada"}' or a.despues <> '{"estado": "realizada"}' then
+  if a is null or a.actor_id is distinct from '00000000-0000-4000-8000-000000000002'::uuid or a.tabla is distinct from 'solicitudes'
+     or a.antes is distinct from '{"estado": "agendada"}' or a.despues is distinct from '{"estado": "realizada"}' then
     raise exception 'la auditoría del cambio de V1 no es la esperada: %', to_jsonb(a);
   end if;
   select * into a from public.auditoria where accion = 'estado' and registro_id = v_s2 and creado_en = now();
-  if a is null or a.actor_id is not null or a.despues <> '{"estado": "descartada"}' then
+  if a is null or a.actor_id is not null or a.despues is distinct from '{"estado": "descartada"}' then
     raise exception 'la auditoría del cambio del servidor no es la esperada: %', to_jsonb(a);
   end if;
   select * into a from public.auditoria where accion = 'asignacion' and registro_id = v_s2;
-  if a is null or a.antes <> '{"asignado_a": "00000000-0000-4000-8000-000000000003"}'
-     or a.despues <> '{"asignado_a": "00000000-0000-4000-8000-000000000002"}' then
+  if a is null or a.antes is distinct from '{"asignado_a": "00000000-0000-4000-8000-000000000003"}'
+     or a.despues is distinct from '{"asignado_a": "00000000-0000-4000-8000-000000000002"}' then
     raise exception 'la auditoría de asignación no es la esperada: %', to_jsonb(a);
   end if;
   select * into a from public.auditoria where accion = 'reagenda' and registro_id = v_r1;
-  if a is null or a.tabla <> 'reuniones'
-     or (select array_agg(k order by k) from jsonb_object_keys(a.despues) k) <> array['anfitrion_id', 'fin', 'inicio']
-     or (select array_agg(k order by k) from jsonb_object_keys(a.antes) k) <> array['anfitrion_id', 'fin', 'inicio']
+  if a is null or a.tabla is distinct from 'reuniones'
+     or (select array_agg(k order by k) from jsonb_object_keys(a.despues) k) is distinct from array['anfitrion_id', 'fin', 'inicio']
+     or (select array_agg(k order by k) from jsonb_object_keys(a.antes) k) is distinct from array['anfitrion_id', 'fin', 'inicio']
      or a.despues ->> 'inicio' is null then
     raise exception 'la auditoría de reagenda no es la esperada: %', to_jsonb(a);
   end if;
   select * into a from public.auditoria where accion = 'cancelacion' and registro_id = v_r1;
-  if a is null or a.antes <> '{"estado": "realizada"}' or a.despues <> '{"estado": "cancelada"}' then
+  if a is null or a.antes is distinct from '{"estado": "realizada"}' or a.despues is distinct from '{"estado": "cancelada"}' then
     raise exception 'la auditoría de cancelación no es la esperada: %', to_jsonb(a);
   end if;
   if (select count(*) from (select 1 from public.auditoria where creado_en = now() limit 10) x) <> 5 then
