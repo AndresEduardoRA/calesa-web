@@ -10,9 +10,9 @@ Los precios y planes de Calesa (semilla §5.4): el catálogo con sus reglas de p
 
 - Entra: sólo `shared` (`lib/formato.ts`). No depende de ningún módulo.
 - Sale, por `index.ts` (servidor): `PLANES`, `pagoAnual`, `ahorroAnual` y los tipos `Plan` e `IdPlan`.
-- Sale, por `pantallas/inicio.ts` (sólo `src/app`): `tarjetasDePlanes` y `Tarjeta`.
-- Sale, por `pantallas/planes.ts` (sólo `src/app`): `tarjetasDePlanes`, `tablaDePlanes`, `PIE_DE_TABLA`, `TEXTO_DE_CELDA` y sus tipos.
-- Los componentes (tarjetas dibujadas, selector Mensual/Anual, tabla con encabezado pegajoso) llegan con su pantalla y salen por esos mismos archivos de `pantallas/`.
+- Sale, por `pantallas/inicio.ts` (sólo `src/app`): `TarjetasConSelector` (Client Component), `tarjetasDePlanes` y `Tarjeta`.
+- Sale, por `pantallas/planes.ts` (sólo `src/app`): `TarjetasConSelector`, `TablaCompleta`, `tarjetasDePlanes`, `tablaDePlanes`, `PIE_DE_TABLA`, `TEXTO_DE_CELDA` y sus tipos.
+- P08 los monta en `/` y `/planes`; los e2e de pantalla son de P37 (P09 los deja probados con Vitest).
 
 ## Archivos clave
 
@@ -20,12 +20,14 @@ Los precios y planes de Calesa (semilla §5.4): el catálogo con sus reglas de p
 - `entities/tarjetas.ts` — `tarjetasDePlanes()`: tamaño, 4 líneas, plazo y los textos de Mensual y de Anual.
 - `entities/tabla.ts` — `tablaDePlanes()`: las 4 secciones y 17 filas de §6.3, celda por celda; `PIE_DE_TABLA` y `TEXTO_DE_CELDA`.
 - `entities/x11.fixture.ts` — la expresión que reconoce el exceso de autos, sólo para las pruebas.
+- `features/precios/components/tarjetas-con-selector.tsx` — las 4 tarjetas y el selector Mensual / Anual (estado local, arranca en Mensual).
+- `features/precios/components/tabla-completa.tsx` — la tabla de §6.3 con sus dos pies: encabezado pegajoso desde `md`, scroll propio y primera columna fija debajo.
 
 ## No se rompe
 
 - Las cifras salen sólo de `PLANES`: el anual y el ahorro se calculan, y las tarjetas y la tabla no copian ningún número.
 - Grupo lleva «desde» en sus cuatro montos; ningún otro plan.
-- La regla de exceso de autos no aparece en ningún texto (X11).
+- La regla de exceso de autos no aparece en ningún texto (X11), tampoco en lo dibujado: las pruebas de los componentes pasan el `textContent` por `NOMBRA_EL_EXCESO`.
 
 ## Ojo
 
