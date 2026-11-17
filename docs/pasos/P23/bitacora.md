@@ -33,20 +33,22 @@ La carpeta de los scripts es `.github/respaldo/` y no `.github/respaldos/`, como
 | `test:kit` sin `PILOTO_*`, `CARRILES_MAX` ni `COORD_*`                                       | 49/49                                                                                                                                                                           | `test-kit-sin-entorno-del-bucle.txt` |
 | `bash scripts/mapa.sh --check`                                                               | verde                                                                                                                                                                           | `mapa-check.txt`                     |
 | `node scripts/piloto/nivel.mjs --rango adc6832..HEAD`                                        | nivel 2 (`shared`), `toca_interfaz: false`, `database_types: false`                                                                                                             | `nivel.txt`                          |
-| `node scripts/guardas/carriles.mjs adc6832 base/p23`                                         | «16 archivos de base/p23 cumplen»                                                                                                                                               | `carriles.txt`                       |
+| `node scripts/guardas/carriles.mjs adc6832 base/p23`                                         | sobre el HEAD con las notas: «18 archivos de base/p23 cumplen»                                                                                                                  | `carriles.txt`                       |
 | Autoprueba local: `bash scripts/candado.sh respaldos -- bash .github/respaldo/autoprueba.sh` | `rc=0`, los 7 pasos, **sin cifrado** (paso 4b): en la máquina no hay `age`. El cifrado, la identidad que no es la pareja y `age --version` los corre el job `autoprueba` del PR | `autoprueba-local.txt`               |
-| e2e dirigidos                                                                                | ninguno (`grep -rln "supabase/admin\|respaldo" e2e/` no da nada)                                                                                                                | —                                    |
+| e2e dirigidos                                                                                | ninguno: `grep -rln "supabase/admin\|respaldo" e2e/` sólo da `e2e/soporte/capturas.ts`, un comentario con «respaldo» en otro sentido                                            | —                                    |
 | Nivel 2: `pnpm test:e2e:completo --project=escritorio`                                       | **no corrido**: falta Chromium (arriba)                                                                                                                                         | `e2e-navegador.txt`                  |
 
-Lo que la autoprueba local dejó medido de los supuestos del plan:
+Lo que la autoprueba local dejó medido de los supuestos del plan (`autoprueba-local.txt` y `supuestos.txt`):
 
-- S1: `supabase db dump --db-url` sin `-f` escribe por stdout. El de datos ya empieza con `SET session_replication_role = replica`.
-- S2: la pila temporal arranca con `--workdir .github/respaldo`, en 55341 y 55342 (`docker port`).
-- S3: el contenedor se llama `supabase_db_calesa-restauracion`.
+- S1: `supabase db dump --db-url` sin `-f` escribe por stdout (los pasos 4b y 5 cargan lo que volcó). El de datos ya empieza con `SET
+session_replication_role = replica` (`supuestos.txt`).
+- S2: la pila temporal arranca con `--workdir .github/respaldo`, con la base en 55342 y la API en 55341 (`DB_URL` y `API_URL` de `supabase
+start`, `autoprueba-local.txt:45`).
+- S3: el contenedor se llama `supabase_db_calesa-restauracion`: `psql_temporal` lo busca por ese nombre y los pasos 5 a 7 corren en él.
 - S4: `session_replication_role` y la carga entera funcionan como `supabase_admin`. Como `postgres`, la carga cae (ver `decisiones.md`).
 - S5 (el `age` de Ubuntu y el runner) y S6 (la forma de producción) siguen sin verificar.
 
-La pila temporal queda abajo al terminar (`docker ps` sin contenedores `calesa-restauracion`).
+La pila temporal queda abajo al terminar: `docker ps` no muestra contenedores `calesa-restauracion` (`supuestos.txt`).
 
 ## Mutaciones (`.piloto/salidas/P23/mutaciones.txt`)
 
@@ -67,5 +69,7 @@ Se revirtieron todas con `cp` y se comprobaron con `cmp`.
 
 - El job `autoprueba` de `restauracion-semanal.yml` corre por primera vez en el PR (sus `paths` lo disparan). Si cae por S5, el arreglo va
   en esta rama.
-- `eslint.config.mjs` ya pasaba de 300 líneas antes de este paso (352) y ahora tiene 389. Es la configuración del kit, y ningún lint cuenta
-  líneas en `.mjs`. Partirla es un paso propio de `base`.
+- `eslint.config.mjs` ya pasaba de 300 líneas antes de este paso (352) y ahora tiene 389 (AGENTS.md: «> 300 líneas: se parte»). Ningún
+  lint cuenta líneas en `.mjs`, y cada archivo que se sume a `DONDE_SE_PERMITE_EL_ADMIN` lo hace crecer. No se partió aquí: las piezas
+  irían a archivos nuevos fuera de los `modulos` del paso y del `dueno_de` de `base` (`docs/semilla/plan.yaml:13`). Se propone un paso
+  (`decisiones.md` › «Paso propuesto»).

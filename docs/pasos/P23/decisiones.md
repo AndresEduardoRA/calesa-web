@@ -80,6 +80,17 @@ calesa-restauracion`, puertos 55340-55349, el hueco libre del bloque 5). Un Post
 - **S6, lo que ninguna autoprueba prueba:** el volcado y la carga usan la misma CLI e imagen sobre una base local. Producción puede tener
   otra versión del esquema `auth` o una extensión que la pila local no trae. La primera prueba real es el disparo a mano de P19.
 
+## Paso propuesto al coordinador (2026-11-17)
+
+`eslint.config.mjs` tenía 352 líneas y ahora tiene 389 (AGENTS.md: «> 300 líneas: se parte»). Lo pidió la auditoría del informe. Partirlo
+pide archivos nuevos que hoy no son de nadie, así que no cabía en P23. El id es el siguiente libre de `plan.yaml`:
+
+| Paso      | Qué hace                                                                                                                                                                                                                                                      | `modulos`                      | Riesgo | Depende de | Verificación                                                                         |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ | ------ | ---------- | ------------------------------------------------------------------------------------ |
+| siguiente | Partir `eslint.config.mjs` por responsabilidad: las restricciones de imports y las listas (`DONDE_SE_PERMITE_EL_ADMIN`) a `eslint/`, y el archivo raíz sólo compone. Sin cambiar ninguna regla: `admin.lint.test.ts` y el lint de todo el repo siguen iguales | `eslint.config.mjs`, `eslint/` | ámbar  | P23        | nivel 1 (`pnpm lint && pnpm typecheck && pnpm test && bash scripts/mapa.sh --check`) |
+
+`eslint/` tendría que sumarse al `dueno_de` de `base` en `plan.yaml`.
+
 ## Para la persona (compuerta `afuera` al cerrar; lo hará P19)
 
 1. `age-keygen -o calesa-respaldo.txt` en una máquina propia, con una copia fuera de GitHub: sin ella no se descifra un respaldo si se
