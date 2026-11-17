@@ -162,7 +162,7 @@ begin
 end $$;
 rollback;
 
--- @test agenda: grants · las dos sólo authenticated y de definidor; nadie escribe las tablas directo (C10, fila 27)
+-- @test agenda: grants · las dos sólo authenticated y de definidor; nadie escribe las tablas directo; ningún delete sin where (C10, fila 27)
 begin;
 do $$
 declare
@@ -181,6 +181,11 @@ begin
      or has_table_privilege('anon', 'public.config_agenda', 'insert, update, delete')
      or has_table_privilege('anon', 'public.horario_base', 'insert, update, delete') then
     raise exception 'alguien escribe la agenda directo';
+  end if;
+  -- PostgREST conecta como authenticator, que precarga safeupdate: un delete sin where cae (21000) aunque sea de definidor.
+  if (select prosrc from pg_proc where oid = 'public.guardar_horario_base(jsonb, timestamptz)'::regprocedure)
+       ~* '\mdelete\s+from\s+[a-z_.]+\s*;' then
+    raise exception 'guardar_horario_base tiene un delete sin where';
   end if;
 end $$;
 rollback;

@@ -111,7 +111,8 @@ begin
     return jsonb_build_object('tramos', v_antes, 'actualizadoEn', v_ver);
   end if;
   v_creado := greatest(clock_timestamp(), coalesce(v_ver, '-infinity'::timestamptz) + interval '1 microsecond');
-  delete from public.horario_base;
+  -- Con `where`: PostgREST conecta como authenticator, que precarga safeupdate, y un delete sin where cae (21000).
+  delete from public.horario_base where true;
   begin
     insert into public.horario_base (dia_semana, desde, hasta, creado_en)
     select (e.value ->> 'diaSemana')::smallint, (e.value ->> 'desde')::time, (e.value ->> 'hasta')::time, v_creado
