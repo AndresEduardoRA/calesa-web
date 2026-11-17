@@ -3,7 +3,8 @@
 # que es lo que Claude recibe). Lee la entrada con jq (`tool_input.command`, `cwd`). Se prueba en `bloquear-peligrosos.test.ts`.
 #
 #   Siempre:          lo irreversible (reset --hard, clean, checkout --, branch -D…), publicar en main (push a main, `gh pr merge`:
-#                     lo integra la persona; una sesión empuja sólo su rama, sin forzar), lo remoto (supabase --linked salvo leer,
+#                     lo integra la persona, salvo un PR de kit/* o plan/* con el CI en verde; una sesión empuja sólo su
+#                     rama, sin forzar), lo remoto (supabase --linked salvo leer,
 #                     config push, gh api …/dispatches, vercel), cambiar dependencias y saltarse el candado de la base (`scripts/candado.sh`).
 #   Sólo PILOTO=1:    todo `git push` (lo publica el bucle, que no es una sesión), `gh` que escribe y `claude`.
 #
@@ -152,6 +153,23 @@ revisar_git() {
   esac
 }
 
+# Excepción que pidió el dueño: una sesión (no el piloto) integra un PR de kit/* o plan/*, por número, con todos los checks en verde,
+# sin borrador y sin --admin. Pregunta a GitHub la rama y los checks; ante cualquier duda (sin número, sin respuesta) no hay excepción.
+pr_propio_en_verde() {
+  local t num="" info
+  for t in "${A[@]:2}"; do
+    case "$t" in
+      --admin) return 1 ;;
+      -*) ;;
+      *) [ -z "$num" ] && num="$t" ;;
+    esac
+  done
+  [[ "$num" =~ ^[0-9]+$ ]] || return 1
+  info=$(gh pr view "$num" --json headRefName,isDraft,statusCheckRollup 2>/dev/null) || return 1
+  jq -e '(.headRefName | test("^(kit|plan)/")) and (.isDraft | not) and (.statusCheckRollup | length > 0)
+    and all(.statusCheckRollup[]; (.conclusion // .state // "") | IN("SUCCESS", "SKIPPED", "NEUTRAL"))' <<<"$info" >/dev/null 2>&1
+}
+
 revisar_gh() {
   local sub="${A[0]:-}" sub2="${A[1]:-}" t
   case "$sub $sub2" in
@@ -160,8 +178,10 @@ revisar_gh() {
   if [ "$sub" = api ] && printf '%s' "$ARGS" | grep -qE '/dispatches'; then
     bloquear "gh api …/dispatches dispara un flujo de trabajo: lo hace una persona."
   fi
-  if [ "$sub $sub2" = "pr merge" ] || { [ "$sub" = api ] && printf '%s' "$ARGS" | grep -qE '/pulls/[0-9]+/merge'; }; then
-    bloquear "gh pr merge integra en main: lo hace la persona al revisar el PR."
+  if [ "$sub $sub2" = "pr merge" ] && [ "$PILOTO" != 1 ] && pr_propio_en_verde; then
+    :
+  elif [ "$sub $sub2" = "pr merge" ] || { [ "$sub" = api ] && printf '%s' "$ARGS" | grep -qE '/pulls/[0-9]+/merge'; }; then
+    bloquear "gh pr merge integra en main: lo hace la persona al revisar el PR (una sesión sólo integra un PR de kit/* o plan/* con el CI en verde)."
   fi
   [ "$PILOTO" = 1 ] || return 0
   case "$sub $sub2" in
