@@ -1,0 +1,46 @@
+# La pila temporal de los respaldos (.github/respaldo/base-temporal.sh, X13): Supabase sin migraciones ni semilla, para que `auth`,
+# `storage` y `extensions` queden como en producción y el respaldo se cargue encima. No es el proyecto: ése está en supabase/config.toml.
+# Puertos 55340-55349, el hueco libre del bloque 5: la principal usa 55320-55329 y cada carril x20-x29 de su centena
+# (scripts/lib/stack-local.mjs).
+project_id = "calesa-restauracion"
+
+[api]
+enabled = true
+port = 55341
+# Sin `publico`: la pila arranca vacía (el esquema llega con el respaldo) y nadie la consulta por la API.
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+
+[db]
+port = 55342
+shadow_port = 55340
+major_version = 17
+
+[db.seed]
+enabled = false
+
+[studio]
+enabled = false
+port = 55343
+
+[local_smtp]
+enabled = false
+port = 55344
+
+[analytics]
+enabled = false
+port = 55347
+
+[auth]
+enabled = true
+site_url = "http://localhost:55341"
+
+[storage]
+enabled = true
+
+[realtime]
+enabled = false
+
+[edge_runtime]
+enabled = false
+inspector_port = 55349

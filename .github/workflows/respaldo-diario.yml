@@ -1,0 +1,49 @@
+name: respaldo-diario
+
+# El respaldo diario de producción (X13, semilla §9.6 y §9.8): Supabase gratis no ofrece respaldos descargables. Vuelca la base con el
+# pg_dump 17 de la CLI de Supabase (esquema y datos), lo cifra con age para el destinatario público y lo guarda como artefacto 30 días.
+# Antes de migrar producción se dispara a mano. restauracion-semanal.yml prueba cada domingo que el último se restaura.
+# - RESPALDO_DESTINATARIO: variable del repositorio (la clave pública age1…). Sin ella el job no corre.
+# - RESPALDO_DB_URL: secreto del Environment `respaldos` (restringido a main): la cadena del pooler de sesión con un rol de sólo
+#   lectura. Ningún otro job la ve, y un dispatch desde otra rama no llega a ella.
+# Los scripts están en .github/respaldo/ (su autoprueba corre en cada PR que los toca).
+on:
+  schedule:
+    - cron: '0 8 * * *' # 04:00 en La Paz
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Un respaldo a la vez; uno a mano va en su propio grupo y no se cancela (CI-1b).
+concurrency:
+  group: ${{ github.event_name == 'workflow_dispatch' && format('ci-manual-{0}-{1}', github.ref, github.run_id) || 'respaldo-diario' }}
+  cancel-in-progress: ${{ github.event_name != 'workflow_dispatch' }}
+
+jobs:
+  respaldar:
+    name: Respaldar producción cifrada
+    if: vars.RESPALDO_DESTINATARIO != ''
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    environment: respaldos
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # La CLI de Supabase es la devDependency: la misma versión que en local, fijada por pnpm-lock.yaml.
+      - uses: ./.github/acciones/preparar
+      - name: age (de los paquetes de Ubuntu de la imagen)
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q --no-install-recommends age
+          age --version
+      - name: Volcar y cifrar
+        env:
+          RESPALDO_DB_URL: ${{ secrets.RESPALDO_DB_URL }}
+          RESPALDO_DESTINATARIO: ${{ vars.RESPALDO_DESTINATARIO }}
+        run: bash .github/respaldo/respaldar.sh "$RUNNER_TEMP/respaldo"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: respaldo
+          path: ${{ runner.temp }}/respaldo/*.sql.age
+          retention-days: 30
+          if-no-files-found: error
