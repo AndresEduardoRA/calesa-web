@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { esquemaConfigCalculadora } from './config'
+import { MENSAJE_INESPERADO } from '@/shared/lib/errores'
+import { ETIQUETA_DE_CONFIG, esquemaConfigCalculadora, leerFilaDeConfig } from './config'
 import { CONFIG_INICIAL } from './ejemplos.fixture'
 
 const problemas = (config: unknown) =>
@@ -48,5 +49,28 @@ describe('esquemaConfigCalculadora', () => {
     ['ciclo_dias', 240],
   ])('acepta %s = %s, un extremo', (campo, valor) => {
     expect(problemas({ ...CONFIG_INICIAL, [campo]: valor })).toEqual([])
+  })
+})
+
+describe('leerFilaDeConfig (C6)', () => {
+  const inesperado = { ok: false, error: { codigo: 'inesperado', mensaje: MENSAJE_INESPERADO } }
+
+  it('da ok con un arreglo de exactamente una fila válida', () => {
+    expect(leerFilaDeConfig([CONFIG_INICIAL])).toEqual({ ok: true, data: CONFIG_INICIAL })
+  })
+
+  it.each([
+    ['sin filas', []],
+    ['dos filas', [CONFIG_INICIAL, CONFIG_INICIAL]],
+    ['un precio fuera de rango', [{ ...CONFIG_INICIAL, precio: 200 }]],
+    ['una volatilidad desconocida', [{ ...CONFIG_INICIAL, volatilidad: 'x' }]],
+    ['null', null],
+    ['un objeto suelto', CONFIG_INICIAL],
+  ])('da fallo inesperado con %s', (_caso, datos) => {
+    expect(leerFilaDeConfig(datos)).toEqual(inesperado)
+  })
+
+  it('la etiqueta de la caché es «calculadora»', () => {
+    expect(ETIQUETA_DE_CONFIG).toBe('calculadora')
   })
 })
