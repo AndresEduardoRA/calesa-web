@@ -2,7 +2,7 @@
 -- pruebas (`supabase/semillas/pruebas.sql`): A admin, V1 vendedora, V3 vendedor inactivo; `{A}`, `{S1}`… los reemplaza
 -- `pruebas.caso`. Cada bloque deja la base como estaba (`begin; … rollback;`).
 
--- @test permisos: el catálogo y permisos_rol son exactamente los de §2 (con notas.gestionar y reuniones.cambiar)
+-- @test permisos: el catálogo y permisos_rol son exactamente los de §2 (con notas.gestionar, reuniones.cambiar y solicitudes.reasignar)
 do $$
 declare
   v_dif text;
@@ -13,7 +13,8 @@ begin
     union all
     select 'admin', c, 'todos' from unnest(array['solicitudes.ver', 'solicitudes.estado', 'notas.crear', 'reuniones.ver',
       'bloqueos.gestionar', 'prospeccion.gestionar', 'metricas.ver', 'auditoria.ver', 'solicitudes.editar_contacto',
-      'notas.gestionar', 'agenda.configurar', 'equipo.gestionar', 'usuarios.gestionar', 'actividad.ver', 'reuniones.cambiar']) c
+      'notas.gestionar', 'agenda.configurar', 'equipo.gestionar', 'usuarios.gestionar', 'actividad.ver', 'reuniones.cambiar',
+      'solicitudes.reasignar']) c
   ), real as (
     select rol::text, clave, alcance from public.permisos_rol
   )

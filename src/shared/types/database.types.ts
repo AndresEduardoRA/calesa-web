@@ -946,6 +946,18 @@ export type Database = {
         Args: { p_asignado: string; p_candidatos: string[]; p_excluir: string; p_h: string }
         Returns: string[]
       }
+      _pasar_reunion: {
+        Args: {
+          p_orden: string[]
+          p_r: Omit<
+            Database['public']['Tables']['reuniones']['Row'],
+            Database['public']['Tables']['reuniones']['ComputedFields']
+          >
+        }
+        Returns: string
+      }
+      _repartir_reuniones: { Args: { p_perfil: string; p_respaldo: string }; Returns: Json }
+      _repartir_solicitudes: { Args: { p_perfil: string }; Returns: Json }
       _resumen_reunion: { Args: { p_anfitrion_anterior: string; p_reunion: string }; Returns: Json }
       _reunion_del_panel: {
         Args: { p_esperado: string; p_reunion_id: string }
@@ -1067,11 +1079,19 @@ export type Database = {
         Returns: Json
       }
       datos_para_horas: { Args: { p_solicitud_id: string; p_token_hash: string }; Returns: Json }
+      desactivar_usuario: {
+        Args: { p_actualizado_en_esperado: string; p_perfil_id: string }
+        Returns: Json
+      }
       es_admin: { Args: Record<PropertyKey, never>; Returns: boolean }
       es_usuario_activo: { Args: Record<PropertyKey, never>; Returns: boolean }
       ids_con_alcance: { Args: { p_clave: string }; Returns: string[] }
       mis_permisos: { Args: Record<PropertyKey, never>; Returns: Json }
       puede_en_solicitud: { Args: { p_clave: string; p_solicitud: string }; Returns: boolean }
+      reasignar_solicitud: {
+        Args: { p_actualizado_en_esperado: string; p_asignar_a: string; p_solicitud_id: string }
+        Returns: Json
+      }
       reservar_reunion: {
         Args: {
           p_inicio: string
