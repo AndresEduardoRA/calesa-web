@@ -4,24 +4,25 @@ Las fórmulas de la calculadora «Lo que se te escapa al mes» (semilla §5.2) y
 
 ## Tablas
 
-- `config_calculadora` (semilla §3 y §9.2): los datos del panel. La leerá `infra/` (P09); `entities/config.ts` valida su fila con las mismas claves. Este módulo todavía no la lee.
+- `config_calculadora` (semilla §3 y §9.2): los datos del panel. Se lee como `anon` por `publico.config_calculadora()` (`infra/queries/config-publica.ts`), en `'use cache'` con la etiqueta `calculadora` (`ETIQUETA_DE_CONFIG`) y `cacheLife('hours')`, o `'minutes'` si falla. La respuesta va sin tipo y pasa por `leerFilaDeConfig()`. La escribe el panel (P21) por su RPC e invalida esa etiqueta.
 
 ## Entra y sale
 
 - Entra: sólo `shared` (`lib/formato.ts`). `solicitudes` lo va a usar para el detalle por correo (§9.2).
-- Sale, por `index.ts` (servidor): `esquemaEntradasCalculadora`, `esquemaConfigCalculadora`, `calcularFugas`, `resumenDeFugas`, `esquemaEntradasEscala`, `calcularEscala`, `textosDeEscala`, `TIEMPOS_DE_RESPUESTA`, `VOLATILIDADES` y sus tipos.
+- Sale, por `index.ts` (servidor): `esquemaEntradasCalculadora`, `esquemaConfigCalculadora`, `calcularFugas`, `resumenDeFugas`, `esquemaEntradasEscala`, `calcularEscala`, `textosDeEscala`, `TIEMPOS_DE_RESPUESTA`, `VOLATILIDADES`, `ETIQUETA_DE_CONFIG` y sus tipos.
 - Sale, por `client.ts`: sólo tipos (`EntradasCalculadora`, `TiempoRespuesta`, `ResultadoFugas`, `ResumenDeFugas`, `EntradasEscala`, `ResultadoEscala`, `TextosDeEscala`). La gráfica de escala, el componente, llega en su propio paso (P26, pedido al coordinador).
 
 ## Archivos clave
 
 - `entities/rangos.ts` — `campoEntero()` y `campoMonto()`: un solo mensaje con el rango permitido; `cuandoPasaron()`, el `when` de las reglas cruzadas.
 - `entities/entradas.ts` — los 5 datos del visitante (§5.2) y la regla «consultas ≥ autos».
-- `entities/config.ts` — los datos del panel (`config_calculadora`), sin valores por defecto.
+- `entities/config.ts` — los datos del panel (`config_calculadora`), sin valores por defecto; `leerFilaDeConfig()` acepta sólo un arreglo de exactamente una fila válida (lo demás es `inesperado`).
 - `entities/supuestos.ts` — los supuestos fijos de §5.2, literales, cada uno `[mínimo, máximo]`.
 - `entities/calculadora.ts` — `calcularFugas()`: los pasos 1-7 de §5.2, sin redondear.
 - `entities/resumen.ts` — `resumenDeFugas()`: titular, rango, horas y filas, ya formateados.
 - `entities/escala.ts` — `esquemaEntradasEscala` (la meta no puede ser menor que hoy), `calcularEscala()` con `techo(x) = ceil(x − 1e-9)` y `textosDeEscala()`.
 - `entities/ejemplos.fixture.ts` — los datos de los ejemplos 1-3 de §5.2, sólo para las pruebas.
+- `infra/cliente-publico.ts` — el cliente `anon` sin cookies sobre `publico` (copia del de `equipo`; TODO de `base`).
 
 ## No se rompe
 
