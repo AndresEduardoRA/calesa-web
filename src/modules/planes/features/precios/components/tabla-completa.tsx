@@ -36,6 +36,7 @@ export function TablaCompleta() {
                   )}
                 >
                   {plan.nombre}
+                  {plan.recomendado ? <span className="sr-only"> (recomendado)</span> : null}
                 </th>
               ))}
             </tr>

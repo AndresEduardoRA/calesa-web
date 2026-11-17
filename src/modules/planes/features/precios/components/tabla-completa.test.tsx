@@ -21,7 +21,7 @@ describe('TablaCompleta (C3, C4)', () => {
     expect(tabla.querySelector('caption')?.textContent).toBe('Planes y precios: tabla completa')
     expect(
       Array.from(container.querySelectorAll('th[scope="col"]')).map((th) => th.textContent),
-    ).toEqual(['Vitrina', 'Operación', 'Completo', 'Grupo'])
+    ).toEqual(['Vitrina', 'Operación (recomendado)', 'Completo', 'Grupo'])
     expect(
       Array.from(container.querySelectorAll('th[scope="colgroup"]')).map((th) => th.textContent),
     ).toEqual(['Montos', 'Tamaño', 'Sistema', 'Servicio'])
