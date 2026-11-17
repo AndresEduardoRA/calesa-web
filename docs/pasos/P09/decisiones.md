@@ -55,6 +55,13 @@ anon` en la base local), pasa la fila por `leerFilaDeConfig`, `calcularFugas` y 
 - **La marca `@sin-celular-archivo` del spec no tiene efecto todavía.** `e2e/soporte/sin-celular.ts:230` sólo lee la raíz de `e2e/`, así
   que el spec corre también en `movil` (y pasa en los dos). La marca queda porque es la que pide `.claude/rules/e2e.md`.
 
+- **El texto de la cifra del cliente vive en `src/modules/calculadora/entities/prueba.ts`**, no en `src/modules/sitio/` como dice
+  `docs/semilla/semilla.md:1147` (§15.1). `plan.yaml` le da la «prueba del cliente» a P09, del carril `calculadora`, que no puede tocar
+  `sitio`. Quien la cambie la busca aquí (paso rojo por H2).
+- **Lo que pidió la auditoría del informe** (dos `fix`, aparte de los tres commits de código):
+  - el encabezado de la columna recomendada de la tabla lleva «(recomendado)» oculto, porque antes se marcaba sólo con el color del borde;
+  - los blancos táctiles de 44 px van en px (`min-h-[44px]`), como pide `.claude/rules/ui.md`, y no en rem como decía C2.
+
 ## Microdecisiones
 
 - **Textos.**
@@ -81,4 +88,11 @@ anon` en la base local), pasa la fila por `leerFilaDeConfig`, `calcularFugas` y 
   - el cliente de Supabase sin cookies;
   - `db:types` con el esquema `publico`;
   - Next 16.4.3: `next build` se corta la primera vez con `SecurityFatalError` y recomienda actualizar.
+- §15.1 de la semilla dice que la cifra del cliente se edita en `src/modules/sitio/`; quedó en `src/modules/calculadora/entities/prueba.ts`.
+  La próxima versión de la semilla debería decirlo.
+- Con el entorno del bucle (`PILOTO_AUTO`, `COORD_MERGE_AUTO`) fallan 7 pruebas del kit, en `scripts/piloto/piloto.test.mjs` y
+  `scripts/coordinador/coordinador.test.mjs`. Por eso el `verificacion.comando` da rojo dentro del bucle aunque el paso no toque el kit.
+  Sin esas variables pasan las 47. Es de las guardas del kit, no de un carril de producto.
+- Para P37: el `aria-live` del titular nace junto con la cifra, y una región que aparece ya llena no siempre se anuncia. Conviene que la
+  región exista desde el inicio.
 - **Términos para la próxima semilla:** «forma de pago» (Mensual / Anual), «Cómo se calculó» y «bloque de prueba».
