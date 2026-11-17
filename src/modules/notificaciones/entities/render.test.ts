@@ -5,9 +5,9 @@ import { CONTEXTO, DATOS_DE_EJEMPLO, REUNION, REUNION_EN_BOGOTA } from './ejempl
 import { renderizar } from './render'
 
 const ASUNTOS: Record<(typeof PLANTILLAS)[number], string> = {
-  'reunion-confirmada': 'Tu demo con Calesa: 3 nov 2026, 10:00',
-  'reunion-nueva-anfitrion': 'Nueva demo: Importadora X, 3 nov 2026, 10:00 (hora de Bolivia)',
-  'reunion-cambiada': 'Cambió tu demo con Calesa: 4 nov 2026, 11:00',
+  'reunion-confirmada': 'Tu demo con Calesa: mar 3 nov, 10:00',
+  'reunion-nueva-anfitrion': 'Nueva demo: Importadora X, mar 3 nov, 10:00 (hora de Bolivia)',
+  'reunion-cambiada': 'Cambió tu demo con Calesa: mié 4 nov, 11:00',
   'reunion-cambiada-equipo': 'Cambio de demo: Importadora X',
   'reunion-cancelada': 'Se canceló tu demo con Calesa',
   'recordatorio-24h': 'Mañana es tu demo con Calesa',
@@ -47,9 +47,26 @@ describe('renderizar · las 12 plantillas con la reunión de ejemplo', () => {
     expect(cancelada).toContain('METHOD:CANCEL')
   })
 
+  it('el adjunto va sólo con el .ics, con su método y el mismo contenido', () => {
+    for (const p of PLANTILLAS) {
+      const dibujado = renderizar(DATOS_DE_EJEMPLO[p], CONTEXTO)
+      expect(dibujado.adjunto === null).toBe(dibujado.ics === null)
+    }
+    const confirmada = renderizar(DATOS_DE_EJEMPLO['reunion-confirmada'], CONTEXTO)
+    const cambiada = renderizar(DATOS_DE_EJEMPLO['reunion-cambiada'], CONTEXTO)
+    const cancelada = renderizar(DATOS_DE_EJEMPLO['reunion-cancelada'], CONTEXTO)
+    expect(confirmada.adjunto?.tipo).toBe('text/calendar; method=REQUEST')
+    expect(cambiada.adjunto?.tipo).toBe('text/calendar; method=REQUEST')
+    expect(cancelada.adjunto?.tipo).toBe('text/calendar; method=CANCEL')
+    expect(Buffer.from(confirmada.adjunto?.contenido ?? '', 'base64').toString('utf8')).toBe(
+      confirmada.ics,
+    )
+  })
+
   it('la cancelación al anfitrión no lleva .ics', () => {
     const datos = { ...DATOS_DE_EJEMPLO['reunion-cancelada'], destinatario: 'anfitrion' as const }
     expect(renderizar(datos, CONTEXTO).ics).toBeNull()
+    expect(renderizar(datos, CONTEXTO).adjunto).toBeNull()
   })
 })
 
@@ -94,13 +111,13 @@ describe('renderizar · zonas, formato y topes', () => {
       { ...DATOS_DE_EJEMPLO['reunion-confirmada'], reunion: REUNION_EN_BOGOTA },
       CONTEXTO,
     )
-    expect(visitante.asunto).toBe('Tu demo con Calesa: 3 nov 2026, 09:00')
+    expect(visitante.asunto).toBe('Tu demo con Calesa: mar 3 nov, 09:00')
     expect(visitante.texto).not.toContain('hora de Bolivia')
     const anfitrion = renderizar(
       { ...DATOS_DE_EJEMPLO['reunion-nueva-anfitrion'], reunion: REUNION_EN_BOGOTA },
       CONTEXTO,
     )
-    expect(anfitrion.texto).toContain('3 nov 2026, 10:00 (hora de Bolivia)')
+    expect(anfitrion.texto).toContain('mar 3 nov, 10:00 (hora de Bolivia)')
   })
 
   it('detalle-calculadora: el rango, las 6 filas, las 3 frases y el botón a /agendar', () => {

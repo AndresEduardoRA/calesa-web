@@ -31,7 +31,7 @@ describe('enviarAhora', () => {
     const mensaje = correo.de('enviar')[0]?.mensaje
     expect(mensaje).toMatchObject({
       para: PARA,
-      asunto: 'Tu demo con Calesa: 3 nov 2026, 10:00',
+      asunto: 'Tu demo con Calesa: mar 3 nov, 10:00',
       etiquetas: { plantilla: 'reunion-confirmada' },
       referencia: referenciaDe(confirmada),
     })
