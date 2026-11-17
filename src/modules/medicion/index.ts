@@ -33,3 +33,5 @@ export {
   type Latido,
   TAREA_DIARIA,
 } from './entities/latidos'
+export { type EmbudoDelMes, leerEmbudoDelMes } from './infra/queries/embudo'
+export { leerLatidoDiario } from './infra/queries/latido'
