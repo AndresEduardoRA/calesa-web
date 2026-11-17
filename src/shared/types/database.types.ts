@@ -853,6 +853,42 @@ export type Database = {
         Returns: number
       }
       _bloquear_agenda: { Args: Record<PropertyKey, never>; Returns: undefined }
+      _bloquear_vigente: {
+        Args: { p_reunion: string; p_solicitud: string }
+        Returns: {
+          actualizado_en: string
+          anfitrion_id: string
+          cancelada_en: string | null
+          creado_en: string
+          enlace_meet: string
+          estado: Database['public']['Enums']['estado_reunion']
+          fin: string
+          id: string
+          inicio: string
+          recordatorio_1_en: string | null
+          recordatorio_24_en: string | null
+          secuencia_ics: number
+          solicitud_id: string
+          token_hash: string
+          zona_visitante: string
+        }
+        SetofOptions: {
+          from: '*'
+          to: 'reuniones'
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      _cancelar_reunion: {
+        Args: {
+          p_esperado: string
+          p_r: Omit<
+            Database['public']['Tables']['reuniones']['Row'],
+            Database['public']['Tables']['reuniones']['ComputedFields']
+          >
+        }
+        Returns: Json
+      }
       _candidatos_reunion: {
         Args: { p_excluir: string; p_exigir_turno?: boolean; p_h: string; p_limitar_a: string }
         Returns: string[]
@@ -879,11 +915,75 @@ export type Database = {
       }
       _limitar_a: { Args: { p_solicitud: string }; Returns: string }
       _mas_minutos: { Args: { p_min: number; p_t: string }; Returns: string }
+      _mover_reunion: {
+        Args: {
+          p_esperado: string
+          p_h: string
+          p_limitar_a: string
+          p_r: Omit<
+            Database['public']['Tables']['reuniones']['Row'],
+            Database['public']['Tables']['reuniones']['ComputedFields']
+          >
+        }
+        Returns: Json
+      }
       _orden_reunion: {
         Args: { p_asignado: string; p_candidatos: string[]; p_excluir: string; p_h: string }
         Returns: string[]
       }
       _resumen_reunion: { Args: { p_anfitrion_anterior: string; p_reunion: string }; Returns: Json }
+      _reunion_del_panel: {
+        Args: { p_esperado: string; p_reunion_id: string }
+        Returns: {
+          actualizado_en: string
+          anfitrion_id: string
+          cancelada_en: string | null
+          creado_en: string
+          enlace_meet: string
+          estado: Database['public']['Enums']['estado_reunion']
+          fin: string
+          id: string
+          inicio: string
+          recordatorio_1_en: string | null
+          recordatorio_24_en: string | null
+          secuencia_ics: number
+          solicitud_id: string
+          token_hash: string
+          zona_visitante: string
+        }
+        SetofOptions: {
+          from: '*'
+          to: 'reuniones'
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      _reunion_del_token: {
+        Args: { p_esperado: string; p_token_hash: string }
+        Returns: {
+          actualizado_en: string
+          anfitrion_id: string
+          cancelada_en: string | null
+          creado_en: string
+          enlace_meet: string
+          estado: Database['public']['Enums']['estado_reunion']
+          fin: string
+          id: string
+          inicio: string
+          recordatorio_1_en: string | null
+          recordatorio_24_en: string | null
+          secuencia_ics: number
+          solicitud_id: string
+          token_hash: string
+          zona_visitante: string
+        }
+        SetofOptions: {
+          from: '*'
+          to: 'reuniones'
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       _transicion: {
         Args: {
           p_desde: Database['public']['Enums']['estado_solicitud']
@@ -902,6 +1002,22 @@ export type Database = {
           p_estado: Database['public']['Enums']['estado_solicitud']
           p_solicitud_id: string
         }
+        Returns: Json
+      }
+      cambiar_reunion: {
+        Args: { p_actualizado_en_esperado: string; p_inicio: string; p_token_hash: string }
+        Returns: Json
+      }
+      cambiar_reunion_panel: {
+        Args: { p_actualizado_en_esperado: string; p_inicio: string; p_reunion_id: string }
+        Returns: Json
+      }
+      cancelar_reunion: {
+        Args: { p_actualizado_en_esperado: string; p_token_hash: string }
+        Returns: Json
+      }
+      cancelar_reunion_panel: {
+        Args: { p_actualizado_en_esperado: string; p_reunion_id: string }
         Returns: Json
       }
       datos_para_horas: { Args: { p_solicitud_id: string; p_token_hash: string }; Returns: Json }
