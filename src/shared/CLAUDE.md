@@ -34,7 +34,7 @@ Infraestructura transversal sin reglas de negocio: clientes de Supabase, errores
 
 ## Ojo
 
-- `admin.ts` importa `server-only`; el lint sólo deja importarlo desde los archivos de `DONDE_SE_PERMITE_EL_ADMIN` (`eslint.config.mjs`; hoy, ninguno).
+- `admin.ts` importa `server-only`; el lint sólo deja importarlo desde los archivos exactos de `DONDE_SE_PERMITE_EL_ADMIN` (`eslint.config.mjs`): los siete `route.ts` de la semilla §9.3 y `src/modules/acceso/infra/auth-admin.ts` (`datos.md`). Un archivo nuevo, aunque sea un ayudante junto a una ruta, se suma en un paso de `base` con su caso en `lib/supabase/admin.lint.test.ts`; ninguna página lo crea (`/reunion/[token]` lee por `/api/reservas`). El lint mira sólo el import directo.
 - `entornoPublico()` valida al primer uso; las `NEXT_PUBLIC_*` se leen con el nombre literal.
 - Los textos hablan de tú, también los `MENSAJE_*` de `errores.ts`.
 - `limitar` recibe quién cuenta (`ContarEnvio`) por parámetro: `seguridad/` no importa el cliente admin. La IP nunca sale en claro (va `sha256(ip + IP_SAL_SECRETO)`; una IPv6 se cuenta por su /64) y a Turnstile va la IP completa de `ipDelPedido`, nunca el /64. El token de solicitud se firma con `emitidoEn` (cuando se entrega), nunca con `solicitudes.creado_en`. `crearContadorEnMemoria` vive en un `*.soporte.ts`: las pruebas lo importan por su ruta.
