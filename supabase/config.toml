@@ -6,7 +6,8 @@ project_id = "calesa-web"
 [api]
 enabled = true
 port = 55321
-schemas = ["public", "graphql_public"]
+# `publico`: lo que lee el visitante, por funciones (supabase/migrations/*_calesa_publico_y_storage.sql).
+schemas = ["public", "publico", "graphql_public"]
 extra_search_path = ["public", "extensions"]
 # El tope de una lectura por PostgREST (.claude/rules/escala.md).
 max_rows = 1000

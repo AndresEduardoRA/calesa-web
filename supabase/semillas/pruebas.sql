@@ -140,6 +140,11 @@ begin
   exception when others then
     -- El bloque que cae deshace sus set_config: vuelve solo al rol de la sesión.
     get stacked diagnostics v_estado = returned_sqlstate, v_hint = pg_exception_hint;
+    -- El Postgres de Supabase le pone a un «permission denied» el hint «Grant the required privileges…»; PGlite, ninguno. Los dos
+    -- son el rechazo de un grant, no el de un trigger (que pone la columna).
+    if v_hint like 'Grant the required privileges%' then
+      v_hint := null;
+    end if;
     v_salio := 'error=' || v_estado || case when coalesce(v_hint, '') <> '' then ':' || v_hint else '' end;
   end;
   perform set_config('role', 'none', true);

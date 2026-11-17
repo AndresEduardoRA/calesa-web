@@ -161,3 +161,40 @@ begin
   end if;
 end $$;
 rollback;
+
+-- @test permisos: lo público va por el esquema publico (dos funciones, ninguna tabla) y el bucket equipo tiene sus límites
+do $$
+declare
+  c record;
+begin
+  if not has_schema_privilege('anon', 'publico', 'usage') or has_schema_privilege('anon', 'publico', 'create') then
+    raise exception 'anon no tiene sólo usage en publico';
+  end if;
+  if exists (select 1 from pg_class where relnamespace = 'publico'::regnamespace) then
+    raise exception 'publico tiene tablas, vistas o secuencias: lo público se lee sólo por sus funciones';
+  end if;
+  for c in select p.oid::regprocedure::text as f, p.prosecdef, p.proconfig, p.proacl
+             from pg_proc p where p.pronamespace = 'publico'::regnamespace loop
+    if c.f not in ('publico.equipo_visible()', 'publico.config_calculadora()') then
+      raise exception 'publico tiene una función de más: %', c.f;
+    end if;
+    if not (c.prosecdef and c.proconfig @> array['search_path=""']) then
+      raise exception '% no es de definidor con search_path vacío', c.f;
+    end if;
+    if not (has_function_privilege('anon', c.f, 'execute') and has_function_privilege('authenticated', c.f, 'execute')
+            and has_function_privilege('service_role', c.f, 'execute')) then
+      raise exception 'anon, authenticated y service_role no ejecutan %', c.f;
+    end if;
+    if exists (select 1 from aclexplode(c.proacl) x where x.grantee = 0) then
+      raise exception 'PUBLIC ejecuta %', c.f;
+    end if;
+  end loop;
+  if exists (select 1 from pg_proc p, unnest(p.proargnames) a
+              where p.oid = 'publico.config_calculadora()'::regprocedure and a = 'actualizado_por') then
+    raise exception 'publico.config_calculadora() expone actualizado_por';
+  end if;
+  if (select row(public, file_size_limit, allowed_mime_types)::text from storage.buckets where id = 'equipo')
+     is distinct from '(t,5242880,"{image/jpeg,image/png,image/webp}")' then
+    raise exception 'el bucket equipo no tiene 5 MiB y jpeg, png y webp';
+  end if;
+end $$;

@@ -5,6 +5,18 @@
 -- dice «0 filas» y el rol no tiene el grant, se espera `42501` (más estricto). Con la respuesta P2 a) de P02, lo que §3 manda por
 -- RPC (estado, asignado_a, borrar, config_calculadora) se rechaza directo; el caso permitido lo prueba P05 por su RPC.
 
+-- @test fila 1 · anon · equipo · select: sólo las visibles, por publico.equipo_visible()
+begin;
+select pruebas.caso('1', 'anon', $$select exists (select 1 from publico.equipo_visible() where id = {E1})
+  and not exists (select 1 from publico.equipo_visible() where id = {E2})$$, 'verdad');
+rollback;
+
+-- @test filas 2 y 3 · anon · config_calculadora · la lee por publico.config_calculadora(); no la cambia
+begin;
+select pruebas.caso('2', 'anon', $$select precio = 18000 from publico.config_calculadora()$$, 'verdad');
+select pruebas.caso('3', 'anon', $$update public.config_calculadora set precio = 1$$, 'error=42501');
+rollback;
+
 -- @test fila 4 · anon · solicitudes · insert: denegado
 begin;
 select pruebas.caso('4', 'anon', $$insert into public.solicitudes (origen, nombre, email, autos_hoy, consentimiento_en)
@@ -187,6 +199,19 @@ begin;
 select pruebas.caso('39', 'A', $$insert into public.equipo (nombre, cargo, orden) values ('Persona Nueva', 'Ventas', 5)$$, 'filas=1');
 select pruebas.caso('39', 'A', $$update public.equipo set visible = true where id = {E2}$$, 'filas=1');
 select pruebas.caso('39', 'A', $$delete from public.equipo where id = {E2}$$, 'filas=1');
+rollback;
+
+-- @test filas 40 a 42 · storage equipo · subir: anon no, A sí (jpg de 1 MB), V1 no
+begin;
+select pruebas.caso('40', 'anon', $$insert into storage.objects (bucket_id, name, metadata) values ('equipo',
+  'f0e4c2f76c58916ec258f246851bea091d14d4247a2fc3e18694461b1816e13b.jpg', '{"size": 1048576, "mimetype": "image/jpeg"}')$$,
+  'error=42501');
+select pruebas.caso('41', 'A', $$insert into storage.objects (bucket_id, name, metadata) values ('equipo',
+  'f0e4c2f76c58916ec258f246851bea091d14d4247a2fc3e18694461b1816e13b.jpg', '{"size": 1048576, "mimetype": "image/jpeg"}')$$,
+  'filas=1');
+select pruebas.caso('42', 'V1', $$insert into storage.objects (bucket_id, name, metadata) values ('equipo',
+  '5d41402abc4b2a76b9719d911017c592ae2b9c1d5e6f7a8b9c0d1e2f3a4b5c6d.jpg', '{"size": 1048576, "mimetype": "image/jpeg"}')$$,
+  'error=42501');
 rollback;
 
 -- @test filas 43 y 44 · V1 · auditoria · ve el cambio de S1, no el de S2
