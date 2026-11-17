@@ -93,6 +93,12 @@ pide archivos nuevos que hoy no son de nadie, así que no cabía en P23. El id e
 
 ## Para la persona (compuerta `afuera` al cerrar; lo hará P19)
 
+La compuerta `afuera` del cierre se contestó sola, tal cual la anotó el bucle (`hechos.json` › `autoelecciones`):
+
+- 2026-11-17T17:13:11-04:00 · P23 · compuerta afuera contestada sola (PILOTO_AUTO): seguir
+
+«Seguir» publica P23 así. Los respaldos quedan apagados, sin error, hasta que P19 haga estos pasos:
+
 1. `age-keygen -o calesa-respaldo.txt` en una máquina propia, con una copia fuera de GitHub: sin ella no se descifra un respaldo si se
    pierde el repo.
 2. La línea `# public key: age1…` va a la **variable de repositorio** `RESPALDO_DESTINATARIO`.
