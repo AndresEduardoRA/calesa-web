@@ -12,4 +12,13 @@ export {
   type TokenDeSolicitud,
 } from './token-solicitud'
 export { generarTokenDeGestion, hashDeTokenDeGestion, type TokenDeGestion } from './token-gestion'
-export { TEXTO_TOKEN_VENCIDO } from './textos'
+export { IP_DESCONOCIDA, ipDelPedido, ipParaLimite } from './ip'
+export {
+  claveDeLimite,
+  LIMITES,
+  limitar,
+  VENTANA_SEGUNDOS,
+  type AccionLimitada,
+  type ContarEnvio,
+} from './limites'
+export { TEXTO_LIMITE, TEXTO_TOKEN_VENCIDO } from './textos'
