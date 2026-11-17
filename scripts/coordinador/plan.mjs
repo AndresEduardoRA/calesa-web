@@ -177,9 +177,13 @@ export function caminoCritico(plan) {
   return memo
 }
 
-/** El estado inicial: todos pendientes. Conserva lo que ya traía `previo` (un plan que creció en una versión nueva de la semilla). */
+/**
+ * El estado inicial: todos pendientes. Conserva lo que ya traía `previo` (un plan que creció en una versión nueva de la semilla),
+ * también los pasos que este plan no conoce: un carril que todavía corre con un plan.yaml más viejo no borra el estado de los pasos
+ * que sumó un plan más nuevo (pasó en calesa-web: P28 y P32 volvieron a «pendiente» a mitad de su paso).
+ */
 export function estadoInicial(plan, previo = { pasos: {} }) {
-  const pasos = {}
+  const pasos = { ...(previo.pasos ?? {}) }
   for (const p of plan.pasos) pasos[p.id] = previo.pasos?.[p.id] ?? { estado: 'pendiente' }
   return { pasos }
 }
