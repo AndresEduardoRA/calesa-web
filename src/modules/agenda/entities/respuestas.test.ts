@@ -46,6 +46,13 @@ describe('esquemaResumenReunion (C2)', () => {
     expect(esquemaResumenReunion.safeParse(datos).success).toBe(true)
   })
 
+  it('acepta los correos que acepta la base aunque z.email() no los acepte', () => {
+    for (const email of ['josé@importadora.test', 'a@b.c']) {
+      const datos = resumen({ solicitud: { email } })
+      expect(esquemaResumenReunion.safeParse(datos).success).toBe(true)
+    }
+  })
+
   it('rechaza un correo de anfitrión inválido o una secuencia que no es un número', () => {
     const malCorreo = { ...resumen(), anfitrion: { ...resumen().anfitrion, email: 'no-es-correo' } }
     expect(esquemaResumenReunion.safeParse(malCorreo).success).toBe(false)

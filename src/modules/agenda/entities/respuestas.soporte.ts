@@ -1,5 +1,6 @@
-// Respuestas de ejemplo de las RPC de la agenda pública (`*.soporte.*`), con la forma exacta que devuelven `datos_para_horas` y
-// `_resumen_reunion` (supabase/migrations/20261117124018_calesa_reservar.sql). Sólo las importan los tests: no sale por `index.ts`.
+// Respuestas de ejemplo de las RPC de la agenda pública (`*.soporte.*`), con las claves y los tipos que devuelven `datos_para_horas` y
+// `_resumen_reunion` (supabase/migrations/20261117124018_calesa_reservar.sql). Algunos instantes van con `Z` y la base los manda con
+// `+00:00`: los schemas aceptan los dos. Sólo las importan los tests: no sale por `index.ts`.
 import { CONFIG_INICIAL, HORARIO_INICIAL, V1, V2, enLaPaz, persona } from './ejemplos.soporte'
 
 export const SOLICITUD = '00000000-0000-4000-8000-000000000051'

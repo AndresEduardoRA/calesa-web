@@ -27,7 +27,12 @@ export const esquemaDatosParaHoras = esquemaEntradaAgenda.extend({
   reunion: esquemaReunionDelToken.optional(),
 })
 
-const persona = z.object({ id: z.guid(), nombre: texto, email: z.email() })
+// El check de `perfiles.email` y `solicitudes.email` (supabase/migrations/20261117024000_calesa_tablas_panel.sql:55,124), no `z.email()`,
+// que es más estricto: el resumen se valida después de que la RPC hizo commit, y un correo que la base aceptó no puede volver la
+// reserva hecha un `inesperado`. Si el correo no le sirve al notificador, ese correo falla solo y se registra.
+const correo = z.string().regex(/^[^@\s]+@[^@\s]+\.[^@\s]+$/)
+
+const persona = z.object({ id: z.guid(), nombre: texto, email: correo })
 
 export const esquemaResumenReunion = z.object({
   reunion: z.object({
@@ -43,7 +48,7 @@ export const esquemaResumenReunion = z.object({
   solicitud: z.object({
     id: z.guid(),
     nombre: texto,
-    email: z.email(),
+    email: correo,
     importadora: texto.nullable(),
     asignadoA: z.guid().nullable(),
   }),

@@ -130,6 +130,12 @@ describe('reservar (C8): la reserva', () => {
     expect(args['p_token_hash']).not.toBe(args['p_token_anterior'])
   })
 
+  it('una reserva hecha con un correo que la base acepta y z.email() no, igual sale bien', async () => {
+    const datos = resumen({ solicitud: { email: 'josé@importadora.test' } })
+    const { deps } = preparar({ respuesta: { data: datos, error: null } })
+    expect((await reservar(entrada(tokenDeSolicitud()), deps)).ok).toBe(true)
+  })
+
   it('una hora ocupada (E1) es una regla y no manda correos', async () => {
     const texto = 'Esa hora se acaba de ocupar. Elige otra.'
     const { deps, pedidos } = preparar({
