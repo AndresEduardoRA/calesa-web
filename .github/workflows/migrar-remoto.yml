@@ -1,0 +1,37 @@
+name: migrar-remoto
+
+# Cada migración que entra a main se aplica al proyecto remoto de Supabase (`supabase db push`), para que el remoto no se quede atrás
+# mientras el piloto suma pasos. La CLI es la devDependency (la misma versión que en local). El proyecto sale de la variable del repo
+# SUPABASE_PROJECT_REF; sin ella el job no hace nada. Los secretos: SUPABASE_ACCESS_TOKEN (un token personal de supabase.com) y
+# SUPABASE_DB_PASSWORD (la contraseña de la base del proyecto). `db push` no carga datos de prueba (sin --include-seed).
+on:
+  push:
+    branches: [main]
+    paths: ['supabase/migrations/**']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Una subida a la vez: un push nuevo cancela el anterior (cada migración va en su transacción y la corrida nueva aplica todo lo que
+# falte); una corrida a mano va en su propio grupo y no se cancela (CI-1b).
+concurrency:
+  group: ${{ github.event_name == 'workflow_dispatch' && format('ci-manual-{0}-{1}', github.ref, github.run_id) || 'migrar-remoto' }}
+  cancel-in-progress: ${{ github.event_name != 'workflow_dispatch' }}
+
+jobs:
+  migrar:
+    name: Migrar el Supabase remoto
+    if: vars.SUPABASE_PROJECT_REF != ''
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/acciones/preparar
+      - run: pnpm exec supabase link --project-ref "${{ vars.SUPABASE_PROJECT_REF }}"
+      - name: Migraciones pendientes
+        run: pnpm exec supabase migration list
+      - run: pnpm exec supabase db push
