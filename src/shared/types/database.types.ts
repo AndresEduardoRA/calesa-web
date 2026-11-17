@@ -909,6 +909,7 @@ export type Database = {
         }
         Returns: Json
       }
+      _dia_local: { Args: { p_t: string }; Returns: string }
       _elegir_asignado: { Args: { p_extra?: Json }; Returns: string }
       _es_elegible: {
         Args: { p_excluir: string; p_exigir_turno?: boolean; p_h: string; p_perfil: string }
@@ -1021,6 +1022,11 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      _sumar_diaria: { Args: { p_columna: string; p_dia: string; p_n: number }; Returns: undefined }
+      _sumar_persona: {
+        Args: { p_columna: string; p_dia: string; p_n: number; p_perfil: string }
+        Returns: undefined
       }
       _tomar_correo: {
         Args: {
