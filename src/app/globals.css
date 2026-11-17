@@ -13,6 +13,17 @@
  */
 @import '../../design/tokens.css';
 
+/*
+ * Las fuentes de la semilla (§8.2) llegan por next/font (src/app/layout.tsx), que deja en `--fuente-archivo` y `--fuente-mono`
+ * sobre <html> la familia que declaró (con Turbopack se llama igual; con webpack lleva un hash) y su respaldo ajustado
+ * («Archivo Fallback», que evita el salto al cambiar de fuente). Acá se enchufan a los tokens sin tocar design/tokens.css, cuyo
+ * bloque es de la semilla; el nombre literal queda de respaldo si falta la variable.
+ */
+:root {
+  --font-sans: var(--fuente-archivo, 'Archivo'), 'Arial', sans-serif;
+  --font-mono: var(--fuente-mono, 'JetBrains Mono'), 'Consolas', monospace;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 /*

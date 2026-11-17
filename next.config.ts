@@ -1,5 +1,7 @@
 import type { NextConfig } from 'next'
+import { PHASE_DEVELOPMENT_SERVER } from 'next/constants'
 
+import { cabecerasDelSitio } from './src/shared/config/cabeceras'
 import { leerEntornoPublico } from './src/shared/config/entorno'
 import {
   esquemaPublico,
@@ -40,5 +42,13 @@ export default function configuracion(fase: string): NextConfig {
     if (problemas.length > 0)
       throw new Error(mensajeDeProblemas('la compilación (públicas)', problemas))
   }
-  return nextConfig
+  // Las cabeceras de §4 (CSP, nosniff, Referrer-Policy y noindex), armadas con las variables del build: sin nonces ni nada por
+  // pedido, así las páginas públicas siguen prerenderizadas (src/shared/config/cabeceras.ts).
+  const entorno = leerEntornoPublico()
+  const opciones = {
+    desarrollo: fase === PHASE_DEVELOPMENT_SERVER,
+    supabaseUrl: entorno['NEXT_PUBLIC_SUPABASE_URL'],
+    vercelEnv: entorno['VERCEL_ENV'],
+  }
+  return { ...nextConfig, headers: () => cabecerasDelSitio(opciones) }
 }
