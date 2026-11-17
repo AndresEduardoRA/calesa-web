@@ -28,7 +28,11 @@ describe('crearClientePublico (C10)', () => {
     expect(url).toBe('http://127.0.0.1:54321')
     expect(clave).toBe('sb_publishable_prueba')
     expect(opciones['db']).toEqual({ schema: 'publico' })
-    expect(opciones['auth']).toMatchObject({ persistSession: false, autoRefreshToken: false })
+    expect(opciones['auth']).toMatchObject({
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+    })
   })
 
   it('crea un cliente nuevo en cada llamada', () => {
