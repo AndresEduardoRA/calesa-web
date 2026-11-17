@@ -12,8 +12,9 @@
 #
 # Solas (kit, como importadora): los tipos de PILOTO_AUTO (piloto.config; por omisión ninguno) se contestan al instante, sin abrir la
 # sesión de decidir: `producto` con la recomendada de cada pregunta, `datos` y `guardas` con «aprobar» (en `guardas` queda el diff en
-# `.piloto/guardas/<paso>.diff`). Cada una queda en `autoelecciones.md` igual que una ámbar. Nunca `parada`, `dependencia`, `afuera` ni
-# `atasco`: son avisos de algo que el piloto no puede juzgar.
+# `.piloto/guardas/<paso>.diff`). Cada una queda en `autoelecciones.md` igual que una ámbar. `afuera`, `dependencia`, `atasco` y `parada`
+# sólo si el dueño las pone en PILOTO_AUTO (un piloto sin nadie que conteste): se elige la primera opción, la recomendada, y en una
+# `parada` eso es «parado» (el carril se detiene y queda el aviso en el registro).
 #
 # Variables que espera: COMUN, ESTADO, BIN, POLL (segundos entre lecturas), EN_SECO y la función `registro`. PREGUNTAS (JSON, opcional):
 # las de una compuerta «producto», una por decisión; compuerta.md las lleva con cuántas tandas de 4 son (CAL-1).
@@ -140,7 +141,7 @@ auto_contesta() { # <tipo>
   [ "${EN_SECO:-0}" != 1 ] || return 1
   [[ ",${PILOTO_AUTO:-}," == *",$1,"* ]] || return 1
   case "$1" in
-    producto) return 0 ;;
+    producto | afuera | dependencia | atasco | parada) return 0 ;;
     datos | guardas) [ -z "${PREGUNTAS:-}" ] ;;
     *) return 1 ;;
   esac
