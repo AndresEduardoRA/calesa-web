@@ -2,7 +2,7 @@
 -- pruebas (`supabase/semillas/pruebas.sql`): A admin, V1 vendedora, V3 vendedor inactivo; `{A}`, `{S1}`… los reemplaza
 -- `pruebas.caso`. Cada bloque deja la base como estaba (`begin; … rollback;`).
 
--- @test permisos: el catálogo y permisos_rol son exactamente los de §2 (con notas.gestionar, reuniones.cambiar y las de P30)
+-- @test permisos: el catálogo y permisos_rol son exactamente los de §2 (con notas.gestionar, reuniones.cambiar y las de P30 y P31)
 do $$
 declare
   v_dif text;
@@ -14,7 +14,7 @@ begin
     select 'admin', c, 'todos' from unnest(array['solicitudes.ver', 'solicitudes.estado', 'notas.crear', 'reuniones.ver',
       'bloqueos.gestionar', 'prospeccion.gestionar', 'metricas.ver', 'auditoria.ver', 'solicitudes.editar_contacto',
       'notas.gestionar', 'agenda.configurar', 'equipo.gestionar', 'usuarios.gestionar', 'actividad.ver', 'reuniones.cambiar',
-      'solicitudes.reasignar', 'solicitudes.borrar']) c
+      'solicitudes.reasignar', 'solicitudes.borrar', 'calculadora.configurar']) c
   ), real as (
     select rol::text, clave, alcance from public.permisos_rol
   )
@@ -83,7 +83,8 @@ begin
       'bloqueos', 'solicitudes', 'notas', 'enlaces_prospeccion', 'equipo', 'eventos', 'metricas_diarias', 'metricas_persona',
       'latidos', 'auditoria', 'correos_salientes', 'permisos', 'permisos_rol']) t
     union all select t, '*', 'DELETE' from unnest(array['bloqueos', 'notas', 'equipo']) t
-    union all select 'perfiles', c, 'UPDATE' from unnest(array['nombre', 'whatsapp', 'enlace_meet']) c
+    -- El Meet, sólo por actualizar_meet (P31, P2a).
+    union all select 'perfiles', c, 'UPDATE' from unnest(array['nombre', 'whatsapp']) c
     union all select 'invitaciones', c, 'INSERT' from unnest(array['email', 'invitado_por']) c
     union all select 'invitaciones', 'estado', 'UPDATE'
     union all select 'bloqueos', c, 'INSERT' from unnest(array['perfil_id', 'inicio', 'fin', 'motivo', 'creado_por']) c

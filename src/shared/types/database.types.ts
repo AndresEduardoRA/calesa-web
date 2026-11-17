@@ -909,6 +909,7 @@ export type Database = {
         }
         Returns: Json
       }
+      _dia_local: { Args: { p_t: string }; Returns: string }
       _elegir_asignado: { Args: { p_extra?: Json }; Returns: string }
       _es_elegible: {
         Args: { p_excluir: string; p_exigir_turno?: boolean; p_h: string; p_perfil: string }
@@ -1022,6 +1023,11 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      _sumar_diaria: { Args: { p_columna: string; p_dia: string; p_n: number }; Returns: undefined }
+      _sumar_persona: {
+        Args: { p_columna: string; p_dia: string; p_n: number; p_perfil: string }
+        Returns: undefined
+      }
       _tomar_correo: {
         Args: {
           p_desde: Database['public']['Enums']['estado_correo'][]
@@ -1064,6 +1070,10 @@ export type Database = {
         }[]
       }
       _validar_zona: { Args: { p_zona: string }; Returns: undefined }
+      actualizar_meet: {
+        Args: { p_actualizado_en_esperado: string; p_enlace_meet: string }
+        Returns: Json
+      }
       borrar_solicitud: {
         Args: { p_actualizado_en_esperado: string; p_solicitud_id: string }
         Returns: Json
@@ -1135,8 +1145,34 @@ export type Database = {
         Args: { p_actualizado_en_esperado: string; p_perfil_id: string }
         Returns: Json
       }
+      elegir_whatsapp: {
+        Args: {
+          p_pagina?: string
+          p_utm_campaign?: string
+          p_utm_content?: string
+          p_utm_medium?: string
+          p_utm_source?: string
+          p_utm_term?: string
+        }
+        Returns: Json
+      }
       es_admin: { Args: Record<PropertyKey, never>; Returns: boolean }
       es_usuario_activo: { Args: Record<PropertyKey, never>; Returns: boolean }
+      guardar_config_calculadora: {
+        Args: {
+          p_actualizado_en_esperado: string
+          p_ciclo_dias: number
+          p_moneda_local: boolean
+          p_pct_local: number
+          p_pct_sena: number
+          p_precio: number
+          p_sena: number
+          p_sueldo: number
+          p_tasa: number
+          p_volatilidad: Database['public']['Enums']['volatilidad']
+        }
+        Returns: Json
+      }
       ids_con_alcance: { Args: { p_clave: string }; Returns: string[] }
       marcar_correo_cancelado: { Args: { p_id: string }; Returns: Json }
       marcar_correo_enviado: {
@@ -1179,6 +1215,19 @@ export type Database = {
           p_ultimo_error?: string
         }
         Returns: Json
+      }
+      registrar_evento: {
+        Args: {
+          p_pagina?: string
+          p_solicitud_id?: string
+          p_tipo: Database['public']['Enums']['tipo_evento']
+          p_utm_campaign?: string
+          p_utm_content?: string
+          p_utm_medium?: string
+          p_utm_source?: string
+          p_utm_term?: string
+        }
+        Returns: undefined
       }
       reservar_reunion: {
         Args: {
