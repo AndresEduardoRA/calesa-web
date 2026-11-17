@@ -28,6 +28,7 @@ import {
 import { join } from 'node:path'
 import {
   estadoInicial,
+  integradosEnMain,
   fraccionDeCuota,
   integraSolo,
   leerConsumo,
@@ -44,6 +45,16 @@ const DIR =
   process.env.COORD_DIR ||
   join(git('rev-parse', '--path-format=absolute', '--git-common-dir'), 'coordinador')
 const PLAN = process.env.COORD_PLAN || join(raiz(), 'docs/semilla/plan.yaml')
+// Sin COORD_PLAN, el plan es el de origin/main (la ref la comparten todos los worktrees): un carril con una rama vieja no
+// le ofrece al coordinador un plan viejo. Sin esa ref (un repo de prueba), el archivo.
+function desdeMain(...args) {
+  if (process.env.COORD_PLAN) return null
+  try {
+    return execFileSync('git', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] })
+  } catch {
+    return null
+  }
+}
 const GH = process.env.COORD_GH || 'gh'
 const MERGE_AUTO = (process.env.COORD_MERGE_AUTO ?? 'verde,ambar')
   .split(',')
@@ -58,6 +69,8 @@ function fallar(msg, codigo = 1) {
 }
 
 function cargarPlan() {
+  const deMain = desdeMain('show', 'origin/main:docs/semilla/plan.yaml')
+  if (deMain) return leerPlan(deMain)
   if (!existsSync(PLAN)) fallar(`no está el plan en ${PLAN} (COORD_PLAN)`)
   return leerPlan(readFileSync(PLAN, 'utf8'))
 }
@@ -99,7 +112,11 @@ function conCandado(fn) {
 
 function leerEstado(plan) {
   const previo = existsSync(ESTADO) ? JSON.parse(readFileSync(ESTADO, 'utf8')) : { pasos: {} }
-  return estadoInicial(plan, previo)
+  return estadoInicial(
+    plan,
+    previo,
+    integradosEnMain(desdeMain('log', 'origin/main', '--format=%s') ?? ''),
+  )
 }
 function guardarEstado(estado) {
   writeFileSync(`${ESTADO}.tmp`, JSON.stringify(estado, null, 2) + '\n')
