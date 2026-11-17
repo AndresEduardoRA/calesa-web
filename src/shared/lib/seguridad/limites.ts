@@ -6,7 +6,8 @@ import { TEXTO_LIMITE } from './textos'
 
 // El límite de envíos por IP (C7, F8): cada acción lleva su propio contador por hora. La IP nunca sale en claro: la clave es
 // `<accion>:<sha256(ip + IP_SAL_SECRETO)>` (semilla §3, tabla `limites`). Quién cuenta entra por parámetro (`ContarEnvio`):
-// el adaptador sobre la RPC de `limites` lo arma quien tiene el cliente admin; en las pruebas, `crearContadorEnMemoria`.
+// `contadorDeSupabase(cliente)`, sobre la RPC `contar_envio`, con el cliente que le pasa la ruta; en las pruebas,
+// `crearContadorEnMemoria`.
 
 export const VENTANA_SEGUNDOS = 3600
 
