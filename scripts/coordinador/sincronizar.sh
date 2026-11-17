@@ -12,6 +12,7 @@ mkdir -p "$COMUN"
 echo "$(TZ=America/La_Paz date +%FT%T) coordinador en marcha (cada $INTERVALO s; tablero en $COMUN/TABLERO.md)."
 while :; do
   [ -f "$COMUN/PARAR" ] && { echo "coordinador: PARAR."; exit 0; }
+  git fetch -q origin main 2>/dev/null # el plan y los pasos integrados salen de origin/main
   node scripts/coordinador/coordinador.mjs sincronizar 2>&1 | sed "s/^/$(TZ=America/La_Paz date +%T) /"
   tablero=$(node scripts/coordinador/coordinador.mjs tablero 2>/dev/null)
   if grep -qE '^([0-9]+) de \1 pasos integrados' <<<"$(sed -n 3p <<<"$tablero")"; then

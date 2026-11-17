@@ -182,10 +182,28 @@ export function caminoCritico(plan) {
  * también los pasos que este plan no conoce: un carril que todavía corre con un plan.yaml más viejo no borra el estado de los pasos
  * que sumó un plan más nuevo (pasó en calesa-web: P28 y P32 volvieron a «pendiente» a mitad de su paso).
  */
-export function estadoInicial(plan, previo = { pasos: {} }) {
+export function estadoInicial(plan, previo = { pasos: {} }, enMain = new Map()) {
   const pasos = { ...(previo.pasos ?? {}) }
-  for (const p of plan.pasos) pasos[p.id] = previo.pasos?.[p.id] ?? { estado: 'pendiente' }
+  for (const p of plan.pasos) {
+    const actual = previo.pasos?.[p.id] ?? { estado: 'pendiente' }
+    const pr = enMain.get(p.id)
+    // Un paso cuyo PR ya entró a main está integrado, aunque una copia vieja del coordinador haya perdido su estado.
+    pasos[p.id] =
+      pr && actual.estado !== 'integrado'
+        ? { ...actual, estado: 'integrado', pr, arreglar: null, integro: 'main' }
+        : actual
+  }
   return { pasos }
+}
+
+/** Los pasos que ya entraron a main, de los asuntos de sus commits («P22 · Layout … (#28)»): id → número de PR. */
+export function integradosEnMain(asuntos) {
+  const enMain = new Map()
+  for (const linea of asuntos.split('\n')) {
+    const m = /^(P\d+) · .*\(#(\d+)\)$/.exec(linea.trim())
+    if (m && !enMain.has(m[1])) enMain.set(m[1], Number(m[2]))
+  }
+  return enMain
 }
 
 /** Cambia el estado de un paso, si la transición vale. Devuelve un estado nuevo; no muta. */
