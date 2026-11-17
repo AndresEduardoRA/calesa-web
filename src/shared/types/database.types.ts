@@ -197,8 +197,9 @@ export type Database = {
           reunion_id: string | null
           solicitud_id: string | null
           ultimo_error: string | null
+          _correo_json: Json | null
         }
-        ComputedFields: never
+        ComputedFields: '_correo_json'
         Insert: {
           adjunto_ics?: string | null
           creado_en?: string
@@ -898,6 +899,16 @@ export type Database = {
         Args: { p_antes: Json; p_despues: Json; p_permitidas: string[] }
         Returns: string
       }
+      _correo_invalido: { Args: { p_campo: string }; Returns: undefined }
+      _correo_json: {
+        Args: {
+          c: Omit<
+            Database['public']['Tables']['correos_salientes']['Row'],
+            Database['public']['Tables']['correos_salientes']['ComputedFields']
+          >
+        }
+        Returns: Json
+      }
       _elegir_asignado: { Args: { p_extra?: Json }; Returns: string }
       _es_elegible: {
         Args: { p_excluir: string; p_exigir_turno?: boolean; p_h: string; p_perfil: string }
@@ -1011,6 +1022,36 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      _tomar_correo: {
+        Args: {
+          p_desde: Database['public']['Enums']['estado_correo'][]
+          p_destino: Database['public']['Enums']['estado_correo']
+          p_id: string
+        }
+        Returns: {
+          adjunto_ics: string | null
+          creado_en: string
+          datos: NonNullable<Json>
+          enviado_en: string | null
+          estado: Database['public']['Enums']['estado_correo']
+          id: string
+          intentos: number
+          para: string
+          plantilla: string
+          programado_para: string | null
+          referencia: string | null
+          resend_id: string | null
+          reunion_id: string | null
+          solicitud_id: string | null
+          ultimo_error: string | null
+        }
+        SetofOptions: {
+          from: '*'
+          to: 'correos_salientes'
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       _transicion: {
         Args: {
           p_desde: Database['public']['Enums']['estado_solicitud']
@@ -1055,6 +1096,13 @@ export type Database = {
         Args: { p_clave: string; p_maximo: number; p_ventana_segundos: number }
         Returns: boolean
       }
+      correo_por_id: { Args: { p_id: string }; Returns: Json }
+      correo_por_referencia: { Args: { p_referencia: string }; Returns: Json }
+      correos_programados_de: {
+        Args: { p_reunion_id?: string; p_solicitud_id?: string; p_tope?: number }
+        Returns: Json
+      }
+      correos_vencidos: { Args: { p_ahora: string; p_tope?: number }; Returns: Json }
       crear_o_juntar_solicitud: {
         Args: {
           p_administracion?: number
@@ -1090,10 +1138,46 @@ export type Database = {
       es_admin: { Args: Record<PropertyKey, never>; Returns: boolean }
       es_usuario_activo: { Args: Record<PropertyKey, never>; Returns: boolean }
       ids_con_alcance: { Args: { p_clave: string }; Returns: string[] }
+      marcar_correo_cancelado: { Args: { p_id: string }; Returns: Json }
+      marcar_correo_enviado: {
+        Args: { p_enviado_en: string; p_id: string; p_intentos: number; p_resend_id?: string }
+        Returns: Json
+      }
+      marcar_correo_fallido: {
+        Args: { p_id: string; p_intentos: number; p_ultimo_error: string }
+        Returns: Json
+      }
+      marcar_correo_reprogramado: {
+        Args: {
+          p_cambiar_resend_id?: boolean
+          p_id: string
+          p_programado_para: string
+          p_resend_id?: string
+        }
+        Returns: Json
+      }
       mis_permisos: { Args: Record<PropertyKey, never>; Returns: Json }
       puede_en_solicitud: { Args: { p_clave: string; p_solicitud: string }; Returns: boolean }
       reasignar_solicitud: {
         Args: { p_actualizado_en_esperado: string; p_asignar_a: string; p_solicitud_id: string }
+        Returns: Json
+      }
+      registrar_correo: {
+        Args: {
+          p_adjunto_ics?: string
+          p_datos: Json
+          p_enviado_en?: string
+          p_estado: Database['public']['Enums']['estado_correo']
+          p_intentos?: number
+          p_para: string
+          p_plantilla: string
+          p_programado_para?: string
+          p_referencia?: string
+          p_resend_id?: string
+          p_reunion_id?: string
+          p_solicitud_id?: string
+          p_ultimo_error?: string
+        }
         Returns: Json
       }
       reservar_reunion: {
