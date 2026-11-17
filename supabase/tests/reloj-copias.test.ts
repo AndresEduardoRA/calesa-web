@@ -17,6 +17,18 @@ const COPIAS: { nombre: string; parte: string; firma?: string }[] = [
   { nombre: '_juntar_solicitud', parte: 'solicitudes' },
   { nombre: 'crear_o_juntar_solicitud', parte: 'solicitudes' },
   { nombre: 'elegir_whatsapp', parte: 'solicitudes' },
+  { nombre: '_proteger_solicitudes', parte: 'panel' },
+  { nombre: '_validar_estado_solicitud', parte: 'panel' },
+  { nombre: '_efecto_en_reunion', parte: 'panel' },
+  { nombre: 'actualizar_meet', parte: 'panel' },
+  {
+    nombre: '_repartir_reuniones',
+    parte: 'panel',
+    firma: 'p_perfil uuid, p_respaldo uuid, p_pausa boolean',
+  },
+  { nombre: 'aceptar_invitacion', parte: 'panel' },
+  { nombre: 'retencion_diaria', parte: 'tareas' },
+  { nombre: '_metricas_solicitud', parte: 'tareas' },
 ]
 
 // Los argumentos de una definición, con los espacios normalizados (distingue las sobrecargas).
