@@ -28,6 +28,7 @@ Los precios y planes de Calesa (semilla §5.4): el catálogo con sus reglas de p
 - Las cifras salen sólo de `PLANES`: el anual y el ahorro se calculan, y las tarjetas y la tabla no copian ningún número.
 - Grupo lleva «desde» en sus cuatro montos; ningún otro plan.
 - La regla de exceso de autos no aparece en ningún texto (X11), tampoco en lo dibujado: las pruebas de los componentes pasan el `textContent` por `NOMBRA_EL_EXCESO`.
+- `NOMBRA_EL_EXCESO` está copiada en tres pruebas de `calculadora` (`entities/como-se-calculo.test.ts`, `entities/etiquetas.test.ts` y `features/publica/components/calculadora-publica.test.tsx`), porque el lint no deja importarla desde otro módulo: un cambio en `x11.fixture.ts` se repite allí.
 
 ## Ojo
 
