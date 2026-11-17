@@ -1139,6 +1139,17 @@ export type Database = {
         Args: { p_actualizado_en_esperado: string; p_perfil_id: string }
         Returns: Json
       }
+      elegir_whatsapp: {
+        Args: {
+          p_pagina?: string
+          p_utm_campaign?: string
+          p_utm_content?: string
+          p_utm_medium?: string
+          p_utm_source?: string
+          p_utm_term?: string
+        }
+        Returns: Json
+      }
       es_admin: { Args: Record<PropertyKey, never>; Returns: boolean }
       es_usuario_activo: { Args: Record<PropertyKey, never>; Returns: boolean }
       guardar_config_calculadora: {
@@ -1198,6 +1209,19 @@ export type Database = {
           p_ultimo_error?: string
         }
         Returns: Json
+      }
+      registrar_evento: {
+        Args: {
+          p_pagina?: string
+          p_solicitud_id?: string
+          p_tipo: Database['public']['Enums']['tipo_evento']
+          p_utm_campaign?: string
+          p_utm_content?: string
+          p_utm_medium?: string
+          p_utm_source?: string
+          p_utm_term?: string
+        }
+        Returns: undefined
       }
       reservar_reunion: {
         Args: {
