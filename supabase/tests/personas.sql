@@ -131,6 +131,8 @@ declare
   v_fila public.auditoria;
   v_n bigint;
 begin
+  -- Un solo admin (X12, índice perfiles_un_admin): A baja a vendedor sin actor para que V2 pueda subir.
+  update public.perfiles set rol = 'vendedor' where id = a;
   perform set_config('request.jwt.claim.sub', a::text, true);
   update public.perfiles set rol = 'admin' where id = v2;
   select * into v_fila from public.auditoria where accion = 'rol' and registro_id = v2;

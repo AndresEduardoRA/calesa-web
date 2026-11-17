@@ -85,7 +85,7 @@ begin
     union all select t, '*', 'DELETE' from unnest(array['bloqueos', 'notas', 'equipo']) t
     -- El Meet, sólo por actualizar_meet (P31, P2a).
     union all select 'perfiles', c, 'UPDATE' from unnest(array['nombre', 'whatsapp']) c
-    union all select 'invitaciones', c, 'INSERT' from unnest(array['email', 'invitado_por']) c
+    union all select 'invitaciones', c, 'INSERT' from unnest(array['email', 'invitado_por', 'nombre']) c
     union all select 'invitaciones', 'estado', 'UPDATE'
     union all select 'bloqueos', c, 'INSERT' from unnest(array['perfil_id', 'inicio', 'fin', 'motivo', 'creado_por']) c
     union all select 'solicitudes', c, 'UPDATE' from unnest(array['nombre', 'email', 'importadora', 'pais', 'whatsapp',

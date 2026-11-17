@@ -90,9 +90,9 @@ select pruebas.caso('14b', 'V1', $$insert into public.notas (solicitud_id, autor
   'error=42501');
 select pruebas.caso('21b', 'V1', $$insert into public.bloqueos (perfil_id, inicio, fin, creado_por)
   values ({V1}, '2026-11-12 14:00Z', '2026-11-12 15:00Z', {V2})$$, 'error=42501');
-select pruebas.caso('32d', 'A', $$insert into public.invitaciones (email, invitado_por) values ('otra@ejemplo.test', {V1})$$,
+select pruebas.caso('32d', 'A', $$insert into public.invitaciones (email, invitado_por, nombre) values ('otra@ejemplo.test', {V1}, 'Otra Persona')$$,
   'error=42501');
-select pruebas.caso('32e', 'A', $$insert into public.invitaciones (email, invitado_por) values ('otra@ejemplo.test', {A})$$, 'filas=1');
+select pruebas.caso('32e', 'A', $$insert into public.invitaciones (email, invitado_por, nombre) values ('otra@ejemplo.test', {A}, 'Otra Persona')$$, 'filas=1');
 rollback;
 
 -- @test fila 16 · V1 · notas · select de S2: 0 filas

@@ -134,10 +134,12 @@ begin;
 do $$
 begin
   perform set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-000000000001', true);
-  update public.perfiles set rol = 'admin' where id = '00000000-0000-4000-8000-000000000003';
+  -- Un solo admin (X12, índice perfiles_un_admin): A baja a vendedor y vuelve, y quedan dos filas `rol`.
+  update public.perfiles set rol = 'vendedor' where id = '00000000-0000-4000-8000-000000000001';
+  update public.perfiles set rol = 'admin' where id = '00000000-0000-4000-8000-000000000001';
   update public.config_calculadora set precio = 20000 where id = 1;
   perform set_config('request.jwt.claim.sub', '', true);
   perform pruebas.caso('V1 rol y config', 'V1', $q$select 1 from public.auditoria where accion in ('rol', 'config')$q$, 'filas=0');
-  perform pruebas.caso('A rol y config', 'A', $q$select 1 from public.auditoria where accion in ('rol', 'config')$q$, 'filas=2');
+  perform pruebas.caso('A rol y config', 'A', $q$select 1 from public.auditoria where accion in ('rol', 'config')$q$, 'filas=3');
 end $$;
 rollback;

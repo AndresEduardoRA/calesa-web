@@ -393,6 +393,7 @@ export type Database = {
           expira_en: string
           id: string
           invitado_por: string
+          nombre: string
         }
         ComputedFields: never
         Insert: {
@@ -404,6 +405,7 @@ export type Database = {
           expira_en?: string
           id?: string
           invitado_por: string
+          nombre: string
         }
         Update: {
           aceptada_en?: string | null
@@ -414,6 +416,7 @@ export type Database = {
           expira_en?: string
           id?: string
           invitado_por?: string
+          nombre?: string
         }
         Relationships: [
           {
@@ -592,8 +595,9 @@ export type Database = {
           nombre: string
           rol: Database['public']['Enums']['rol_usuario']
           whatsapp: string | null
+          _perfil_json: Json | null
         }
-        ComputedFields: never
+        ComputedFields: '_perfil_json'
         Insert: {
           activo?: boolean
           actualizado_en?: string
@@ -968,8 +972,21 @@ export type Database = {
         }
         Returns: string
       }
-      _repartir_reuniones: { Args: { p_perfil: string; p_respaldo: string }; Returns: Json }
-      _repartir_solicitudes: { Args: { p_perfil: string }; Returns: Json }
+      _perfil_json: {
+        Args: {
+          p_p: Omit<
+            Database['public']['Tables']['perfiles']['Row'],
+            Database['public']['Tables']['perfiles']['ComputedFields']
+          >
+        }
+        Returns: Json
+      }
+      _repartir_reuniones:
+        | { Args: { p_perfil: string; p_respaldo: string }; Returns: Json }
+        | { Args: { p_pausa: boolean; p_perfil: string; p_respaldo: string }; Returns: Json }
+      _repartir_solicitudes:
+        | { Args: { p_perfil: string }; Returns: Json }
+        | { Args: { p_pausa: boolean; p_perfil: string }; Returns: Json }
       _resumen_reunion: { Args: { p_anfitrion_anterior: string; p_reunion: string }; Returns: Json }
       _reunion_del_panel: {
         Args: { p_esperado: string; p_reunion_id: string }
@@ -1070,12 +1087,25 @@ export type Database = {
         }[]
       }
       _validar_zona: { Args: { p_zona: string }; Returns: undefined }
+      aceptar_invitacion: { Args: Record<PropertyKey, never>; Returns: Json }
       actualizar_meet: {
         Args: { p_actualizado_en_esperado: string; p_enlace_meet: string }
         Returns: Json
       }
+      asignar_rol: {
+        Args: {
+          p_nombre?: string
+          p_rol: Database['public']['Enums']['rol_usuario']
+          p_usuario_id: string
+        }
+        Returns: Json
+      }
       borrar_solicitud: {
         Args: { p_actualizado_en_esperado: string; p_solicitud_id: string }
+        Returns: Json
+      }
+      cambiar_en_turno: {
+        Args: { p_actualizado_en_esperado: string; p_en_turno: boolean; p_perfil_id: string }
         Returns: Json
       }
       cambiar_estado_solicitud: {
@@ -1158,6 +1188,18 @@ export type Database = {
       }
       es_admin: { Args: Record<PropertyKey, never>; Returns: boolean }
       es_usuario_activo: { Args: Record<PropertyKey, never>; Returns: boolean }
+      guardar_config_agenda: {
+        Args: {
+          p_actualizado_en_esperado: string
+          p_anticipacion_min_horas: number
+          p_cancelar_hasta_horas: number
+          p_descanso_min: number
+          p_duracion_min: number
+          p_horizonte_dias: number
+          p_max_reuniones_dia: number
+        }
+        Returns: Json
+      }
       guardar_config_calculadora: {
         Args: {
           p_actualizado_en_esperado: string
@@ -1171,6 +1213,10 @@ export type Database = {
           p_tasa: number
           p_volatilidad: Database['public']['Enums']['volatilidad']
         }
+        Returns: Json
+      }
+      guardar_horario_base: {
+        Args: { p_actualizado_en_esperado: string; p_tramos: Json }
         Returns: Json
       }
       ids_con_alcance: { Args: { p_clave: string }; Returns: string[] }
@@ -1194,6 +1240,10 @@ export type Database = {
       }
       mis_permisos: { Args: Record<PropertyKey, never>; Returns: Json }
       puede_en_solicitud: { Args: { p_clave: string; p_solicitud: string }; Returns: boolean }
+      reactivar_usuario: {
+        Args: { p_actualizado_en_esperado: string; p_perfil_id: string }
+        Returns: Json
+      }
       reasignar_solicitud: {
         Args: { p_actualizado_en_esperado: string; p_asignar_a: string; p_solicitud_id: string }
         Returns: Json
