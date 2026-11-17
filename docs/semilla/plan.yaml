@@ -225,9 +225,9 @@ pasos:
     titulo: Adjuntos en el correo y fecha con día de la semana
     depende_de: [P01, P06]
     carril: base
-    riesgo: rojo
+    riesgo: ambar
     modulos: [src/shared/lib/]
-    ruteo: {agente: claude, modelo: opus, effort: xhigh, modo: plan→manual, sesion: nueva, revisor: claude-sesion-nueva}
+    ruteo: {agente: claude, modelo: sonnet, effort: high, modo: auto, sesion: nueva, revisor: ninguno}
     verificacion: {nivel: 1, comando: "pnpm lint && pnpm typecheck && pnpm test && bash scripts/mapa.sh --check"}
     terminado: >-
       adjuntos en esquemaDeMensaje y en los adaptadores mailpit y resend-api; formato de fecha con día de la
@@ -277,7 +277,7 @@ pasos:
 
   - id: P11
     titulo: Flujo público de agenda (formulario con gráfica, horas, reserva, confirmación, gestión)
-    depende_de: [P03, P04, P05, P06, P07, P30, P33, P29]
+    depende_de: [P03, P04, P05, P06, P07, P30, P33]
     carril: ventas
     riesgo: rojo
     modulos: [src/modules/agenda/features/, src/modules/agenda/infra/, src/modules/agenda/pantallas/, src/modules/agenda/client.ts, src/modules/solicitudes/features/formulario/, src/modules/solicitudes/infra/, src/modules/solicitudes/pantallas/, src/modules/solicitudes/client.ts, src/app/agendar/, src/app/reunion/, src/app/api/solicitudes/, src/app/api/reservas/, src/app/api/horas/, e2e/ventas/agenda/]
@@ -358,7 +358,7 @@ pasos:
 
   - id: P13
     titulo: Tarea diaria (retención, reintentos, limpieza, cupos) y webhook de Resend
-    depende_de: [P05, P06, P07, P12, P30, P29]
+    depende_de: [P05, P06, P07, P12, P30]
     carril: tareas
     riesgo: rojo
     modulos: [vercel.json, src/app/api/cron/, src/app/api/webhooks/, e2e/tareas/diario.spec.ts]
@@ -391,7 +391,7 @@ pasos:
 
   - id: P15
     titulo: Panel de ventas (solicitudes, notas, reuniones, disponibilidad y bloqueos)
-    depende_de: [P14, P11, P30, P29, P34]
+    depende_de: [P14, P11, P30, P34]
     carril: ventas
     riesgo: ambar
     modulos: [src/modules/solicitudes/features/panel/, src/modules/agenda/features/panel/, src/app/(app)/panel/solicitudes/, src/app/(app)/panel/reuniones/, src/app/(app)/panel/disponibilidad/, e2e/ventas/panel/]
@@ -453,7 +453,7 @@ pasos:
 
   - id: P18
     titulo: Calidad completa (flujos de punta a punta, accesibilidad, rendimiento con volumen)
-    depende_de: [P13, P15, P16, P17, P21]
+    depende_de: [P13, P15, P16, P17, P21, P29]
     carril: calidad
     riesgo: ambar
     modulos: [e2e/flujos/, e2e/rendimiento/, e2e/accesibilidad/]
