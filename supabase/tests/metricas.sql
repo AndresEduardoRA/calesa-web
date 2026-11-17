@@ -151,7 +151,7 @@ begin
 end $$;
 rollback;
 
--- @test metricas: realizada cuenta el día de la demo (del anfitrión); ganada, el día en que se marca (del asignado) (C17, C19)
+-- @test metricas: realizada cuenta el día de la demo (del anfitrión, que no cambia después); ganada, el día en que se marca (del asignado) (C17, C19)
 begin;
 do $$
 declare
@@ -162,6 +162,7 @@ declare
   v_r uuid := pruebas.reunion(v_s, v1, now() - interval '2 days');
   v_rd int := pruebas.metrica(d, 'reuniones_realizadas');
   v_rp int := pruebas.metrica(d, 'reuniones_realizadas', v1);
+  v_r2 int := pruebas.metrica(d, 'reuniones_realizadas', '00000000-0000-4000-8000-000000000003');
   v_rh int := pruebas.metrica(hoy, 'reuniones_realizadas');
   v_gd int := pruebas.metrica(hoy, 'ganadas');
   v_gp int := pruebas.metrica(hoy, 'ganadas', v1);
@@ -174,6 +175,12 @@ begin
   update public.solicitudes set estado = 'ganada' where id = v_s;
   if pruebas.metrica(hoy, 'ganadas') <> v_gd + 1 or pruebas.metrica(hoy, 'ganadas', v1) <> v_gp + 1 then
     raise exception 'la ganada no contó hoy en el día y para V1';
+  end if;
+  -- Ya realizada, un cambio de anfitrión no mueve reuniones_realizadas (P7a).
+  update public.reuniones set anfitrion_id = '00000000-0000-4000-8000-000000000003' where id = v_r;
+  if pruebas.metrica(d, 'reuniones_realizadas', v1) <> v_rp + 1
+     or pruebas.metrica(d, 'reuniones_realizadas', '00000000-0000-4000-8000-000000000003') <> v_r2 then
+    raise exception 'el cambio de anfitrión de una demo realizada movió reuniones_realizadas';
   end if;
 end $$;
 rollback;
