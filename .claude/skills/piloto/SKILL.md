@@ -67,7 +67,7 @@ La semilla es la fuente de verdad: lee en `docs/semilla/semilla.md` las seccione
 7. **Notas y commits.**
    - Tus notas van en `docs/pasos/<PASO>/`:
      - `bitacora.md`: qué se hizo, lo medido y `e2e completo: sí|no`.
-     - `decisiones.md`: cada decisión no obvia, con la fecha de `TZ=America/La_Paz date +%F`. Si `hechos.json` › `autoelecciones` trae una autoelección ámbar de tu paso, también va aquí, tal cual.
+     - `decisiones.md`: cada decisión no obvia, con la fecha de `TZ=America/La_Paz date +%F`. Si `hechos.json` › `autoelecciones` trae una autoelección de tu paso (ámbar o de `PILOTO_AUTO`), también va aquí, tal cual.
    - Corre `bash scripts/mapa.sh` si existe.
    - **Commits por intención**: hasta 3 de código y el de notas. Asunto en español, en minúscula, de 72 caracteres como máximo, con el formato `tipo(<carril>): …`.
    - **Sin push.**
@@ -86,7 +86,7 @@ La semilla es la fuente de verdad: lee en `docs/semilla/semilla.md` las seccione
 }
 ```
 
-- **`listo`:** `commits` es exactamente `git rev-list --first-parent --reverse <head_arranque>..HEAD`, con el commit del merge si hubo uno, y el árbol está limpio. El bucle corre lint, typecheck, test, tu `verificacion.comando` y los `e2e_dirigidos`; no le cree a tu «listo».
+- **`listo`:** `commits` es exactamente `git rev-list --first-parent --reverse <head_arranque>..HEAD`, con el commit del merge si hubo uno, y el árbol está limpio. El bucle sólo repite typecheck y mapa (nada si la huella del hook Stop está verde); lint, la suite y los e2e los corre el CI del PR, que decide si se integra. Por eso tu `verificacion.comando` lo corres tú, al final, y `e2e_dirigidos` lista lo que corriste.
 - **`compuerta`:** el formato está en [compuertas.md](compuertas.md); la opción recomendada siempre va primero.
   - Una de `producto` en un paso que no es rojo es **ámbar**: si la persona no responde en `PILOTO_AUTO_MIN` minutos, el bucle elige la recomendada. Por eso esa opción tiene que ser una que puedas aceptar sin más.
 - **`falla`:** lo que no pudiste hacer y por qué. No inventes un `listo`.
