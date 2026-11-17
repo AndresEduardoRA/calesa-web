@@ -159,3 +159,18 @@ describe('reservar (C8): la reserva', () => {
     }
   })
 })
+
+describe('reservar (C8): la entrada', () => {
+  it('una hora que no es ISO con zona se rechaza sin contar en el límite ni ir a la base', async () => {
+    const contar = vi.fn<ContarEnvio>(() => Promise.resolve(ok(true)))
+    const { deps, llamadas, pedidos } = preparar({ contar })
+    const r = await reservar({ ...entrada(tokenDeSolicitud()), inicio: '2026-11-03 10:00' }, deps)
+    expect(r).toEqual({
+      ok: false,
+      error: { codigo: 'validacion', mensaje: 'Elige una hora válida.' },
+    })
+    expect(contar).not.toHaveBeenCalled()
+    expect(llamadas).toEqual([])
+    expect(pedidos).toEqual([])
+  })
+})

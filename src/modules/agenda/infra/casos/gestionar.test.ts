@@ -191,3 +191,24 @@ describe('cancelarReunion (C9)', () => {
     ])
   })
 })
+
+describe('las entradas de la gestión (C9)', () => {
+  it('sin token, con un token vacío o con una versión que no es ISO, no van a la base', async () => {
+    const { deps, llamadas } = preparar()
+    const enlace = {
+      ok: false,
+      error: { codigo: 'validacion', mensaje: 'Este enlace no es válido.' },
+    }
+    expect(await leerReunion({}, deps)).toEqual(enlace)
+    expect(await cancelarReunion({ t: '', actualizadoEn: VERSION }, deps)).toEqual(enlace)
+    const cambio = await cambiarReunion(
+      { t: TOKEN_GESTION, inicio: NUEVO_INICIO, actualizadoEn: 'ayer' },
+      deps,
+    )
+    expect(cambio).toEqual({
+      ok: false,
+      error: { codigo: 'validacion', mensaje: 'Elige una hora válida.' },
+    })
+    expect(llamadas).toEqual([])
+  })
+})
