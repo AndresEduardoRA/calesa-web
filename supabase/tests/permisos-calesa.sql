@@ -198,3 +198,15 @@ begin
     raise exception 'el bucket equipo no tiene 5 MiB y jpeg, png y webp';
   end if;
 end $$;
+
+-- @test permisos: el ayudante pruebas.caso (ejecuta SQL con cambio de rol) no lo alcanzan anon ni authenticated
+do $$
+begin
+  if has_schema_privilege('anon', 'pruebas', 'usage') or has_schema_privilege('authenticated', 'pruebas', 'usage') then
+    raise exception 'anon o authenticated tienen usage en el esquema pruebas';
+  end if;
+  if has_function_privilege('anon', 'pruebas.caso(text, text, text, text, text)', 'execute')
+     or has_function_privilege('authenticated', 'pruebas.caso(text, text, text, text, text)', 'execute') then
+    raise exception 'anon o authenticated pueden ejecutar pruebas.caso';
+  end if;
+end $$;

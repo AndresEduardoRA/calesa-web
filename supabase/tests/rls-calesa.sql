@@ -84,6 +84,17 @@ select pruebas.caso('15', 'V1', $$insert into public.notas (solicitud_id, autor_
   'error=42501');
 rollback;
 
+-- @test filas 14b, 21b, 32d y 32e · al insertar, el dueño es quien inserta (C13)
+begin;
+select pruebas.caso('14b', 'V1', $$insert into public.notas (solicitud_id, autor_id, texto) values ({S1}, {V2}, 'A nombre de otro.')$$,
+  'error=42501');
+select pruebas.caso('21b', 'V1', $$insert into public.bloqueos (perfil_id, inicio, fin, creado_por)
+  values ({V1}, '2026-11-12 14:00Z', '2026-11-12 15:00Z', {V2})$$, 'error=42501');
+select pruebas.caso('32d', 'A', $$insert into public.invitaciones (email, invitado_por) values ('otra@ejemplo.test', {V1})$$,
+  'error=42501');
+select pruebas.caso('32e', 'A', $$insert into public.invitaciones (email, invitado_por) values ('otra@ejemplo.test', {A})$$, 'filas=1');
+rollback;
+
 -- @test fila 16 · V1 · notas · select de S2: 0 filas
 begin;
 select pruebas.caso('16', 'V1', $$select not exists (select 1 from public.notas where solicitud_id = {S2})
