@@ -39,6 +39,14 @@ describe('verificarTurnstile: lo que manda', () => {
     ])
   })
 
+  it('corta el pedido a siteverify a los 5 s', async () => {
+    const tope = vi.spyOn(AbortSignal, 'timeout')
+    const { pedir } = siteverify(Response.json({ success: true }))
+    await verificarTurnstile(TOKEN, { entorno: conSecreto, pedir })
+    expect(tope).toHaveBeenCalledWith(5000)
+    tope.mockRestore()
+  })
+
   it('manda una IPv6 completa como remoteip, nunca su /64', async () => {
     const { pedir, llamadas } = siteverify(Response.json({ success: true }))
     await verificarTurnstile(TOKEN, { ip: '2001:db8:a:b::4', entorno: conSecreto, pedir })
