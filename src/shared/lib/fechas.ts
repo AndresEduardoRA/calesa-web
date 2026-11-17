@@ -34,6 +34,14 @@ export function formatearFechaHora(
   return formatear(iso, 'd MMM yyyy, HH:mm', zona)
 }
 
+// «mar 3 nov, 10:00»: el día de la semana, para correos y avisos donde la gente confirma una cita (semilla §6.8).
+export function formatearFechaConDia(
+  iso: string,
+  { zona = ZONA_POR_DEFECTO }: Opciones = {},
+): string {
+  return formatear(iso, 'EEE d MMM, HH:mm', zona)
+}
+
 // «14:30»
 export function formatearHora(iso: string, { zona = ZONA_POR_DEFECTO }: Opciones = {}): string {
   return formatear(iso, 'HH:mm', zona)
