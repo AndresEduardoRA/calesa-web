@@ -1,6 +1,6 @@
 // Cancelar los correos programados: uno por referencia, o todos los de una reunión o una solicitud (al cambiarla o cancelarla, X6). Con
 // Resend se cancelan en el proveedor; los que no tienen `resendId` (local, e2e) sólo se marcan.
-import { ok, type Resultado } from '../../../shared/lib/errores'
+import { ok, type Resultado } from '@/shared/lib/errores'
 import type { FilaDeCorreo, Quien } from '../entities/registro'
 import type { Dependencias } from './nucleo'
 

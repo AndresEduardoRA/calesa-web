@@ -1,7 +1,7 @@
 // Enviar un correo en el momento (los de evento: reserva, cambio, cancelación, avisos) con 2 reintentos, y mandar lo que quedó en el registro
 // sin proveedor que lo programe (`despacharVencidos`). El correo se registra DESPUÉS de mandarlo: la tabla no tiene estado «pendiente».
 // Un correo que no salió no tumba la acción que lo pidió: queda `fallido` y se avisa al equipo, una vez y sin cadena.
-import { ok, type Resultado } from '../../../shared/lib/errores'
+import { ok, type Resultado } from '@/shared/lib/errores'
 import type { FilaDeCorreo } from '../entities/registro'
 import { conReintentos } from '../entities/reintentos'
 import {

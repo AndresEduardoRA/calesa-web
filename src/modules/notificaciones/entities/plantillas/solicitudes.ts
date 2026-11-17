@@ -2,7 +2,7 @@
 import type { Contenido, Contexto } from '../contenido'
 import type { DatosDe } from '../datos'
 import { fechaParaEquipo, importadoraONombre } from '../formato-correo'
-import { formatearNumero, formatoRango, formatoUSD } from '../../../../shared/lib/formato'
+import { formatearNumero, formatoRango, formatoUSD } from '@/shared/lib/formato'
 import { enlaceDeSolicitud } from './ayudas'
 
 const ORIGENES = {

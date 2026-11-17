@@ -2,9 +2,9 @@
 // organiza, a quién van los avisos). Es la única parte del módulo que lee el entorno; las pruebas inyectan las dos cosas.
 import 'server-only'
 
-import { urlDelSitio } from '../../../shared/config/entorno'
-import { entornoDelServidor } from '../../../shared/config/servidor'
-import type { Resultado } from '../../../shared/lib/errores'
+import { urlDelSitio } from '@/shared/config/entorno'
+import { entornoDelServidor } from '@/shared/config/servidor'
+import type { Resultado } from '@/shared/lib/errores'
 import {
   cancelarEmail,
   enviarEmail,
@@ -13,7 +13,7 @@ import {
   reprogramarEmail,
   type EnvioDeEmail,
   type MensajeDeEmail,
-} from '../../../shared/lib/email'
+} from '@/shared/lib/email'
 
 type Envio = Promise<Resultado<EnvioDeEmail>>
 

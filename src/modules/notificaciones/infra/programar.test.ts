@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 
 vi.mock('server-only', () => ({}))
 
-import { fallo } from '../../../shared/lib/errores'
+import { fallo } from '@/shared/lib/errores'
 import { DATOS_DE_EJEMPLO, REUNION } from '../entities/ejemplos.soporte'
 import { momentosDeRecordatorio } from '../entities/recordatorios'
 import { referenciaDe } from '../entities/referencia'

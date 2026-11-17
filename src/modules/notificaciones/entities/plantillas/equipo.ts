@@ -1,4 +1,5 @@
 // Las plantillas que salen a `EMAIL_AVISOS`: el aviso de cada solicitud o cambio de reunión (B17) y el de un correo que no salió.
+import { formatearNumero } from '@/shared/lib/formato'
 import type { Contenido, Contexto } from '../contenido'
 import type { DatosDe } from '../datos'
 import { fechaParaEquipo, importadoraONombre } from '../formato-correo'
@@ -43,7 +44,7 @@ export const plantillasDelEquipo = {
           ['Plantilla', d.plantillaFallida],
           ['Para', d.paraFallido],
           ['Error', d.ultimoError],
-          ['Intentos', String(d.intentos)],
+          ['Intentos', formatearNumero(d.intentos, { decimales: 0 })],
         ],
       },
       { tipo: 'boton', texto: 'Revisar', url: enlaceDeActividad(ctx.sitio) },

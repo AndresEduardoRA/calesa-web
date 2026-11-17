@@ -1,6 +1,6 @@
 // Cómo se escriben las fechas, los nombres y los textos largos en los correos. Las fechas salen de `fechas.ts` (nunca a mano). Hasta que
 // `fechas.ts` sepa escribir el día de la semana (§6.8: «mar 3 nov, 10:00»), va «3 nov 2026, 10:00»: se cambia aquí, en un solo archivo.
-import { ZONA_POR_DEFECTO, formatearFechaHora } from '../../../shared/lib/fechas'
+import { ZONA_POR_DEFECTO, formatearFechaHora } from '@/shared/lib/fechas'
 
 export const ZONA_DEL_EQUIPO = ZONA_POR_DEFECTO
 export const LARGO_MAXIMO_EN_ASUNTO = 80

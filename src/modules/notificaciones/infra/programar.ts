@@ -1,7 +1,7 @@
 // Programar y reprogramar los correos (cancelar, en `cancelar.ts`) que salen a su hora (recordatorios de 24 h y 1 h, aviso de 15 min; X6). Con Resend se
 // programan en el proveedor (`scheduledAt`) y se cancelan o reprograman allá; sin él (local, e2e) se guardan y los manda `despacharVencidos`.
-import { fallo, ok, type Resultado } from '../../../shared/lib/errores'
-import { esquemaDeCuando } from '../../../shared/lib/email/tipos'
+import { fallo, ok, type Resultado } from '@/shared/lib/errores'
+import { esquemaDeCuando } from '@/shared/lib/email/tipos'
 import type { FilaDeCorreo } from '../entities/registro'
 import { conReintentos } from '../entities/reintentos'
 import {

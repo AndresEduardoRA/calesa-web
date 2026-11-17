@@ -73,7 +73,7 @@ describe('armarIcs · texto largo y escapes', () => {
 
   it('al desplegar vuelve el texto, con ;, , y \\ escapados', () => {
     const desplegado = desplegar(ics)
-    expect(desplegado).toContain('Ñandú\; el\\, grande\\\\ ' + 'ñ'.repeat(80))
+    expect(desplegado).toContain(String.raw`Ñandú\; el\, grande\\ ` + 'ñ'.repeat(80))
   })
 
   it('nunca lleva el enlace de gestión ni /reunion/', () => {
@@ -114,7 +114,7 @@ describe('plegarLinea', () => {
 
 describe('escaparTextoIcs e instanteIcs', () => {
   it('escapa \\, ;, , y los saltos de línea', () => {
-    expect(escaparTextoIcs('a\\b;c,d\ne')).toBe('a\\\\b\;c\\,d\\ne')
+    expect(escaparTextoIcs('a\\b;c,d\ne')).toBe(String.raw`a\\b\;c\,d\ne`)
   })
 
   it('escribe el instante en UTC sin separadores', () => {

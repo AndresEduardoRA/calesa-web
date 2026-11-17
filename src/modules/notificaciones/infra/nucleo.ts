@@ -2,8 +2,8 @@
 // (registrarlo, o devolver la fila que ya estaba). `infra/` no consulta Supabase: el registro entra por la interfaz de `entities/registro.ts`.
 import { z } from 'zod'
 
-import { fallo, ok, type ErrorApp, type Resultado } from '../../../shared/lib/errores'
-import type { MensajeDeEmail } from '../../../shared/lib/email/tipos'
+import { fallo, ok, type ErrorApp, type Resultado } from '@/shared/lib/errores'
+import type { MensajeDeEmail } from '@/shared/lib/email/tipos'
 import {
   datosParaGuardar,
   esParaElEquipo,

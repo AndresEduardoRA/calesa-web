@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 
-import { fallo, ok, type Resultado } from '../../../shared/lib/errores'
+import { fallo, ok, type Resultado } from '@/shared/lib/errores'
 import {
   ESPERAS_ENTRE_INTENTOS_MS,
   INTENTOS_MAXIMOS,

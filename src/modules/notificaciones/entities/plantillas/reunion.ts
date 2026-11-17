@@ -1,4 +1,5 @@
 // Las plantillas de reunión que se mandan al reservar o al cambiar: confirmada y cambiada (visitante), nueva y cambiada-equipo (equipo).
+import { formatearNumero } from '@/shared/lib/formato'
 import type { Bloque, Contenido, Contexto } from '../contenido'
 import type { DatosDe } from '../datos'
 import { importadoraONombre } from '../formato-correo'
@@ -31,7 +32,10 @@ export const plantillasDeReunion = {
           tipo: 'filas',
           filas: [
             ['Cuándo', fecha],
-            ['Duración', `${minutosDeDuracion(reunion)} minutos`],
+            [
+              'Duración',
+              `${formatearNumero(minutosDeDuracion(reunion), { decimales: 0 })} minutos`,
+            ],
             ['Te atiende', reunion.anfitrion.nombre],
           ],
         },

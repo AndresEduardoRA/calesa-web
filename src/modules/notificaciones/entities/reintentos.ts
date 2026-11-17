@@ -1,6 +1,6 @@
 // Los reintentos de un envío: 3 intentos (2 reintentos), esperando 300 y 900 ms. Sólo se reintenta lo que puede arreglarse solo: un fallo
 // del proveedor o de la red (`inesperado`). Un `validacion`, `regla`, `conflicto` o `no_encontrado` repetido da lo mismo.
-import type { CodigoError, Resultado } from '../../../shared/lib/errores'
+import type { CodigoError, Resultado } from '@/shared/lib/errores'
 
 export const ESPERAS_ENTRE_INTENTOS_MS = [300, 900] as const
 export const INTENTOS_MAXIMOS = ESPERAS_ENTRE_INTENTOS_MS.length + 1

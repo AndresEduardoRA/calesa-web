@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { esquemaDeMensaje } from '../../../shared/lib/email/tipos'
+import { esquemaDeMensaje } from '@/shared/lib/email/tipos'
 import { PLANTILLAS } from './datos'
 import { DATOS_DE_EJEMPLO, REUNION } from './ejemplos.soporte'
 import { hashCorto, referenciaDe } from './referencia'

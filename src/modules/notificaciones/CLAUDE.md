@@ -13,7 +13,7 @@ Las 12 plantillas de correo de §6.8 (con marca y modo texto), el .ics de una re
 - `entities/datos.ts` — los datos de cada plantilla como unión discriminada por `plantilla` (Zod); `idsDe` y `datosParaGuardar` (sin `enlaceGestion`).
 - `entities/plantillas/*.ts` — cada plantilla entrega un `Contenido` (asunto, título, bloques, método de .ics); no dibujan.
 - `entities/marca.ts` — dibuja los bloques en HTML (tabla de 600 px, estilos en línea, hex de §8.1) y en texto desde el mismo contenido.
-- `entities/html.ts` — el escape: `html\`…\``escapa cada interpolación;`urlSegura`sólo deja`http:`y`https:`.
+- `entities/html.ts` — el escape: la etiqueta `html` escapa cada interpolación; `urlSegura` sólo deja pasar `http:` y `https:`.
 - `entities/render.ts` — `renderizar(datos, contexto)` puro: asunto, html, texto y .ics.
 - `entities/ics.ts` — .ics RFC 5545 a mano: UID `<reunionId>@calesa.app`, `SEQUENCE` = la secuencia recibida, CRLF, líneas plegadas a 75 octetos.
 - `entities/referencia.ts` — la clave idempotente de cada correo.

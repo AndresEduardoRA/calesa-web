@@ -17,7 +17,7 @@ export function instanteIcs(iso: string): string {
 export function escaparTextoIcs(texto: string): string {
   return texto
     .replace(/\\/g, '\\\\')
-    .replace(/;/g, '\;')
+    .replace(/;/g, String.raw`\;`)
     .replace(/,/g, '\\,')
     .replace(/\r?\n/g, '\\n')
 }

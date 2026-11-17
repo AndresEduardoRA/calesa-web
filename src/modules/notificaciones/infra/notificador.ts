@@ -1,7 +1,7 @@
 // El notificador: todo lo que el resto de la app hace con los correos de Calesa (enviar, programar, cancelar, reprogramar, reintentar,
 // despachar los vencidos). Recibe el registro por la interfaz de `entities/registro.ts`; lo demás tiene valores por defecto (el kit de
 // correo y el entorno) que las pruebas reemplazan.
-import { fallo, ok, type Resultado } from '../../../shared/lib/errores'
+import { fallo, ok, type Resultado } from '@/shared/lib/errores'
 import type { RegistroDeCorreos } from '../entities/registro'
 import { correoDelKit, entornoDeCorreo, type EntornoDeCorreo, type PuertoDeCorreo } from './correo'
 import { crearCancelaciones } from './cancelar'

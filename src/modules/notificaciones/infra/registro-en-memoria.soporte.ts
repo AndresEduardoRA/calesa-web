@@ -1,7 +1,7 @@
 // El registro de correos y el correo falsos de las pruebas (no salen por `index.ts`). El registro en memoria cumple la misma interfaz que
 // tendrá el adaptador sobre las RPC (P29).
-import { fallo, ok, type Resultado } from '../../../shared/lib/errores'
-import type { EnvioDeEmail, MensajeDeEmail } from '../../../shared/lib/email/tipos'
+import { fallo, ok, type Resultado } from '@/shared/lib/errores'
+import type { EnvioDeEmail, MensajeDeEmail } from '@/shared/lib/email/tipos'
 import type { FilaDeCorreo, NuevaFila, Quien, RegistroDeCorreos } from '../entities/registro'
 import type { PuertoDeCorreo } from './correo'
 
