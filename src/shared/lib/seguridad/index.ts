@@ -21,4 +21,5 @@ export {
   type AccionLimitada,
   type ContarEnvio,
 } from './limites'
-export { TEXTO_LIMITE, TEXTO_TOKEN_VENCIDO } from './textos'
+export { URL_SITEVERIFY, verificarTurnstile } from './turnstile'
+export { TEXTO_LIMITE, TEXTO_TOKEN_VENCIDO, TEXTO_TURNSTILE } from './textos'
