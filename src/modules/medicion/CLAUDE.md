@@ -15,7 +15,7 @@ Eventos, métricas, embudo, cupos gratis y latidos (semilla §9.2; F8, X7, R4.4,
 
 ## Archivos clave
 
-- `entities/eventos.ts` — `paginaDelEvento` (sólo la ruta, sin consulta ni fragmento) y `esquemaEventoPublico` (estricto: sólo `clic_agendar` y `calculadora_usada`, `pagina` y los cinco `utm_*`).
+- `entities/eventos.ts` — `paginaDelEvento` (sólo la ruta, sin consulta, fragmento ni token de reunión) y `esquemaEventoPublico` (estricto: sólo `clic_agendar` y `calculadora_usada`, `pagina` y los cinco `utm_*`).
 - `entities/whatsapp.ts` — el mensaje de D3, `enlaceDeWhatsApp` (E.164 → `wa.me`, o `null`) y `RUTA_SIN_WHATSAPP` (R4.10).
 - `entities/embudo.ts` — `mesEnZona`, `rangoDelMes`, las sumas del equipo y propia, y `fuenteDelEmbudo` (qué tabla lee cada alcance).
 - `entities/cupos.ts` — los umbrales de R5.2 y `evaluarCupos` (más del 80 %: `>`).
@@ -24,7 +24,7 @@ Eventos, métricas, embudo, cupos gratis y latidos (semilla §9.2; F8, X7, R4.4,
 
 ## No se rompe
 
-- Un evento público nunca lleva datos personales: ni correo, ni ids, ni la consulta de la URL (X7). El número de WhatsApp sólo existe en el enlace de salida; nunca se registra.
+- Un evento público nunca lleva datos personales: ni correo, ni ids, ni la consulta de la URL, ni el token de `/reunion/<token>` (se guarda `/reunion`) (X7). El número de WhatsApp sólo existe en el enlace de salida; nunca se registra.
 - El embudo sale de `metricas_*` (≤ 31 filas por mes), nunca de contar `eventos`.
 - Las lecturas no usan el cliente admin: un vendedor que pide el embudo del equipo recibe ceros (0 filas), no datos ajenos.
 - Un fallo de lectura se devuelve como valor (`Resultado`) con un `console.error` con el código, sin filas.

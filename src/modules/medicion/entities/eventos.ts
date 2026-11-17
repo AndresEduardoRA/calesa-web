@@ -4,6 +4,7 @@ import { TIPOS_DE_EVENTO_PUBLICOS } from './tipos-de-evento'
 
 const MAXIMO_DE_PAGINA = 200
 const MAXIMO_DE_UTM = 100
+const RUTA_DE_REUNION = '/reunion'
 
 // Espacios y caracteres de control (`\p{Cc}`): una ruta con alguno no es una ruta del sitio.
 const CARACTER_NO_PERMITIDO = /[\s\p{Cc}]/u
@@ -21,7 +22,8 @@ export function paginaDelEvento(valor: unknown): string | null {
   if (ruta.length > MAXIMO_DE_PAGINA || CARACTER_NO_PERMITIDO.test(ruta)) {
     return null
   }
-  return ruta
+  // `/reunion/<token>`: el token da acceso a la reunión de una solicitud, así que no se guarda (X7).
+  return ruta === RUTA_DE_REUNION || ruta.startsWith(`${RUTA_DE_REUNION}/`) ? RUTA_DE_REUNION : ruta
 }
 
 const utm = z

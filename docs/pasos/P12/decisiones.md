@@ -22,7 +22,7 @@ Respuesta de la persona, tal cual: «aprobar partir (Recommended)».
 ## 2026-11-17 · Otras decisiones no obvias
 
 - Umbral de base: 400 000 000 bytes (decimales, no 400 MiB): avisa un poco antes. «Más del 80 %» es `>`: en el umbral justo no avisa (R5.2).
-- `paginaDelEvento` corta en el primer `?` o `#`: nunca se guarda una consulta (X7). El esquema de `POST /api/eventos` es estricto: una clave de más (`email`, `solicitud_id`, `perfil_id`) hace fallar todo.
+- `paginaDelEvento` corta en el primer `?` o `#`: nunca se guarda una consulta (X7). Y `/reunion/<token>` se guarda como `/reunion`: el token da acceso a la reunión de una solicitud (lo vio el auditor del informe; el plan no lo cubría). El esquema de `POST /api/eventos` es estricto: una clave de más (`email`, `solicitud_id`, `perfil_id`) hace fallar todo.
 - Sin `client.ts`: la semilla no hace depender `sitio` de `medicion` y el oyente de P17 sólo lee atributos `data-evento`; si P17 lo necesita, lo pide.
 - `leerEmbudoDelMes` corre con la sesión de quien mira: un vendedor que pide el embudo del equipo recibe ceros por la RLS, no datos ajenos. `fuenteDelEmbudo` sólo elige la tabla.
 - Pendiente para P13: dónde se guarda el resultado de los cupos para que el panel lo muestre; la semilla no lo define.

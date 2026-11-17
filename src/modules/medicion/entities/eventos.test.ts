@@ -9,6 +9,13 @@ describe('paginaDelEvento (C2)', () => {
     expect(paginaDelEvento('/')).toBe('/')
   })
 
+  it('no guarda el token de /reunion/<token> (X7)', () => {
+    expect(paginaDelEvento('/reunion/abc123def456')).toBe('/reunion')
+    expect(paginaDelEvento('/reunion/abc123?x=1#y')).toBe('/reunion')
+    expect(paginaDelEvento('/reunion')).toBe('/reunion')
+    expect(paginaDelEvento('/reuniones')).toBe('/reuniones')
+  })
+
   it('da null si no es una ruta del sitio', () => {
     expect(paginaDelEvento(42)).toBeNull()
     expect(paginaDelEvento(undefined)).toBeNull()
