@@ -857,6 +857,7 @@ export type Database = {
         Args: { p_maximo: number; p_pedido: number; p_por_defecto: number }
         Returns: number
       }
+      _ahora: { Args: Record<PropertyKey, never>; Returns: string }
       _bloquear_agenda: { Args: Record<PropertyKey, never>; Returns: undefined }
       _bloquear_solicitudes: { Args: Record<PropertyKey, never>; Returns: undefined }
       _bloquear_vigente: {
