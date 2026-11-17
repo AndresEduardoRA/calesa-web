@@ -159,3 +159,138 @@ end;
 $$;
 
 revoke all on function pruebas.caso(text, text, text, text, text) from public, anon, authenticated;
+
+-- `pruebas.caso` sólo compara SQLSTATE y hint: este compara SQLSTATE y el texto exacto del error (los de la tabla E de P05 son todos
+-- P0001 sin hint). Mismo cambio de rol y mismos marcadores (`{A}`, `{S1}`…) en p_sql y p_antes. Cae si p_sql no falla o si el error
+-- es otro. Los ayudantes de `pruebas` no van dentro de p_sql: el rol cambiado no tiene usage en el esquema.
+create or replace function pruebas.error(p_fila text, p_como text, p_sql text, p_sqlstate text, p_mensaje text,
+  p_antes text default null)
+returns void
+language plpgsql
+as $$
+declare
+  v_ids constant jsonb := '{"A": "00000000-0000-4000-8000-000000000001", "V1": "00000000-0000-4000-8000-000000000002",
+    "V2": "00000000-0000-4000-8000-000000000003", "V3": "00000000-0000-4000-8000-000000000004",
+    "S1": "00000000-0000-4000-8000-000000000011", "S2": "00000000-0000-4000-8000-000000000012",
+    "R1": "00000000-0000-4000-8000-000000000021"}'::jsonb;
+  v_nombre text;
+  v_uuid text;
+  v_usuario text;
+  v_rol text;
+  v_estado text;
+  v_mensaje text;
+begin
+  for v_nombre, v_uuid in select key, value from jsonb_each_text(v_ids) loop
+    p_sql := replace(p_sql, '{' || v_nombre || '}', quote_literal(v_uuid) || '::uuid');
+    p_antes := replace(p_antes, '{' || v_nombre || '}', quote_literal(v_uuid) || '::uuid');
+  end loop;
+  v_usuario := v_ids ->> regexp_replace(p_como, '^definer:', '');
+  v_rol := case
+    when p_como like 'definer:%' then null
+    when p_como in ('anon', 'service_role') then p_como
+    when v_usuario is not null then 'authenticated'
+  end;
+  if (p_como like 'definer:%' and v_usuario is null) or (p_como not like 'definer:%' and v_rol is null) then
+    raise exception 'fila %: no conozco «%»', p_fila, p_como;
+  end if;
+
+  perform set_config('request.jwt.claim.sub', '', true);
+  perform set_config('request.jwt.claim.role', '', true);
+  perform set_config('request.jwt.claims', '', true);
+  if p_antes is not null then
+    execute p_antes;
+  end if;
+
+  begin
+    perform set_config('request.jwt.claim.sub', coalesce(v_usuario, ''), true);
+    perform set_config('request.jwt.claim.role', coalesce(v_rol, 'authenticated'), true);
+    perform set_config('request.jwt.claims', jsonb_build_object('sub', v_usuario, 'role', coalesce(v_rol, 'authenticated'))::text, true);
+    if v_rol is not null then
+      perform set_config('role', v_rol, true);
+    end if;
+    execute p_sql;
+    perform set_config('role', 'none', true);
+  exception when others then
+    get stacked diagnostics v_estado = returned_sqlstate, v_mensaje = message_text;
+  end;
+  perform set_config('role', 'none', true);
+  perform set_config('request.jwt.claim.sub', '', true);
+  perform set_config('request.jwt.claim.role', '', true);
+  perform set_config('request.jwt.claims', '', true);
+
+  if v_estado is null then
+    raise exception 'fila %: se esperaba el error % «%» y no falló', p_fila, p_sqlstate, p_mensaje;
+  end if;
+  if v_estado is distinct from p_sqlstate or v_mensaje is distinct from p_mensaje then
+    raise exception 'fila %: se esperaba % «%», salió % «%»', p_fila, p_sqlstate, p_mensaje, v_estado, v_mensaje;
+  end if;
+end;
+$$;
+
+revoke all on function pruebas.error(text, text, text, text, text, text) from public, anon, authenticated;
+
+-- Datos de las pruebas de P05 (corren con el rol de la sesión; nunca dentro del p_sql de `caso` o `error`). Una solicitud con los
+-- obligatorios y un correo único; una reunión confirmada de 30 min con un token al azar; el sha256 de un token de gestión.
+create or replace function pruebas.solicitud(p_asignado uuid, p_estado text default 'nueva', p_origen text default 'formulario',
+  p_ref text default null)
+returns uuid
+language sql
+as $$
+  insert into public.solicitudes (origen, nombre, email, importadora, pais, whatsapp, autos_hoy, consentimiento_en, asignado_a,
+    estado, ref_codigo)
+  values (p_origen::public.origen_solicitud, 'Cliente de Prueba', 'p' || replace(gen_random_uuid()::text, '-', '') || '@ejemplo.test',
+    'Importadora Prueba', 'BO', '+59171000099', 10, now(), p_asignado, p_estado::public.estado_solicitud, p_ref)
+  returning id
+$$;
+
+create or replace function pruebas.reunion(p_solicitud uuid, p_anfitrion uuid, p_inicio timestamptz)
+returns uuid
+language sql
+as $$
+  insert into public.reuniones (solicitud_id, anfitrion_id, inicio, fin, zona_visitante, enlace_meet, token_hash)
+  values (p_solicitud, p_anfitrion, p_inicio, p_inicio + interval '30 minutes', 'America/La_Paz',
+    'https://meet.google.com/aaa-bbbb-ccc', extensions.gen_random_bytes(32))
+  returning id
+$$;
+
+create or replace function pruebas.token(p_texto text)
+returns bytea
+language sql
+immutable
+as $$
+  select extensions.digest(p_texto, 'sha256')
+$$;
+
+revoke all on function pruebas.solicitud(uuid, text, text, text), pruebas.reunion(uuid, uuid, timestamptz), pruebas.token(text)
+  from public, anon, authenticated;
+
+-- La agenda de las pruebas de reserva: abierta de 08:00 a 20:00 los 7 días; `hora(d, 'HH:MI')` = esa hora local (zona de la config)
+-- dentro de d días; `claves(json, esperadas)` = el objeto (o cada objeto del arreglo, que no puede ser vacío) tiene esas claves exactas.
+create or replace function pruebas.abrir_agenda()
+returns void
+language sql
+as $$
+  delete from public.horario_base;
+  insert into public.horario_base (dia_semana, desde, hasta) select d, '08:00', '20:00' from generate_series(1, 7) d;
+$$;
+
+create or replace function pruebas.hora(p_dias int, p_hora text)
+returns timestamptz
+language sql
+stable
+as $$
+  select ((now() at time zone c.zona_horaria)::date + p_dias + p_hora::time) at time zone c.zona_horaria
+    from public.config_agenda c where c.id = 1
+$$;
+
+create or replace function pruebas.claves(p_json jsonb, p_esperadas text[])
+returns boolean
+language sql
+immutable
+as $$
+  select coalesce(bool_and((select coalesce(array_agg(k order by k collate "C"), '{}') from jsonb_object_keys(o) k)
+           = (select array_agg(e order by e collate "C") from unnest(p_esperadas) e)), false)
+    from jsonb_array_elements(case jsonb_typeof(p_json) when 'array' then p_json else jsonb_build_array(p_json) end) o
+$$;
+
+revoke all on function pruebas.abrir_agenda(), pruebas.hora(int, text), pruebas.claves(jsonb, text[]) from public, anon, authenticated;

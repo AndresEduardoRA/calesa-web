@@ -2,18 +2,18 @@
 -- pruebas (`supabase/semillas/pruebas.sql`): A admin, V1 vendedora, V3 vendedor inactivo; `{A}`, `{S1}`… los reemplaza
 -- `pruebas.caso`. Cada bloque deja la base como estaba (`begin; … rollback;`).
 
--- @test permisos: el catálogo y permisos_rol son exactamente los de §2 (con notas.gestionar)
+-- @test permisos: el catálogo y permisos_rol son exactamente los de §2 (con notas.gestionar y reuniones.cambiar)
 do $$
 declare
   v_dif text;
 begin
   with esperado (rol, clave, alcance) as (
     select 'vendedor', c, 'propio' from unnest(array['solicitudes.ver', 'solicitudes.estado', 'notas.crear', 'reuniones.ver',
-      'bloqueos.gestionar', 'prospeccion.gestionar', 'metricas.ver', 'auditoria.ver']) c
+      'bloqueos.gestionar', 'prospeccion.gestionar', 'metricas.ver', 'auditoria.ver', 'reuniones.cambiar']) c
     union all
     select 'admin', c, 'todos' from unnest(array['solicitudes.ver', 'solicitudes.estado', 'notas.crear', 'reuniones.ver',
       'bloqueos.gestionar', 'prospeccion.gestionar', 'metricas.ver', 'auditoria.ver', 'solicitudes.editar_contacto',
-      'notas.gestionar', 'agenda.configurar', 'equipo.gestionar', 'usuarios.gestionar', 'actividad.ver']) c
+      'notas.gestionar', 'agenda.configurar', 'equipo.gestionar', 'usuarios.gestionar', 'actividad.ver', 'reuniones.cambiar']) c
   ), real as (
     select rol::text, clave, alcance from public.permisos_rol
   )
@@ -64,8 +64,8 @@ end $$;
 -- @test permisos: mis_permisos da las claves exactas de V1 y nada al inactivo
 begin;
 select pruebas.caso('mis_permisos V1', 'V1', $$select jsonb_path_query_array(public.mis_permisos(), '$.permisos[*].clave')
-  = '["auditoria.ver", "bloqueos.gestionar", "metricas.ver", "notas.crear", "prospeccion.gestionar", "reuniones.ver",
-      "solicitudes.estado", "solicitudes.ver"]'::jsonb
+  = '["auditoria.ver", "bloqueos.gestionar", "metricas.ver", "notas.crear", "prospeccion.gestionar", "reuniones.cambiar",
+      "reuniones.ver", "solicitudes.estado", "solicitudes.ver"]'::jsonb
   and jsonb_path_query_array(public.mis_permisos(), '$.permisos[*] ? (@.alcance != "propio")') = '[]'::jsonb
   and jsonb_path_query_first(public.mis_permisos(), '$.activo') = 'true'::jsonb
   and not public.mis_permisos() ? 'rol'$$, 'verdad');
@@ -125,7 +125,9 @@ begin
       ('public.es_admin()', true), ('public.puede_en_solicitud(uuid, text)', true), ('public.mis_permisos()', true),
       ('public._columna_cambiada(jsonb, jsonb, text[])', true), ('public._mas_minutos(timestamptz, integer)', true),
       ('public._proteger_solicitudes()', false), ('public._proteger_perfiles()', false), ('public._proteger_reuniones()', false),
-      ('public._tocar_actualizado_en()', false)
+      ('public._tocar_actualizado_en()', false), ('public._validar_estado_solicitud()', false),
+      ('public._efecto_en_reunion()', false), ('public._auditar_solicitud()', false), ('public._auditar_reunion()', false),
+      ('public._fallar(text)', false)
     ) t (f, autenticado) loop
     if has_function_privilege('authenticated', c.f, 'execute') is distinct from c.autenticado then
       raise exception 'authenticated % ejecutar %', case when c.autenticado then 'no puede' else 'puede' end, c.f;
