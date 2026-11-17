@@ -1020,6 +1020,10 @@ export type Database = {
         Args: { p_actualizado_en_esperado: string; p_reunion_id: string }
         Returns: Json
       }
+      contar_envio: {
+        Args: { p_clave: string; p_maximo: number; p_ventana_segundos: number }
+        Returns: boolean
+      }
       datos_para_horas: { Args: { p_solicitud_id: string; p_token_hash: string }; Returns: Json }
       es_admin: { Args: Record<PropertyKey, never>; Returns: boolean }
       es_usuario_activo: { Args: Record<PropertyKey, never>; Returns: boolean }
