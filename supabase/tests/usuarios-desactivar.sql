@@ -165,7 +165,7 @@ end $$;
 do $$
 declare
   v_d text := (select prosrc from pg_proc where oid = 'public.desactivar_usuario'::regproc);
-  v_r text := (select prosrc from pg_proc where oid = 'public._repartir_reuniones'::regproc);
+  v_r text := (select prosrc from pg_proc where oid = 'public._repartir_reuniones(uuid, uuid, boolean)'::regprocedure);
 begin
   if v_d !~ 'for no key update' or v_r ~ '_bloquear_vigente' or v_r !~ 'r\.id = v_id and r\.estado = ''confirmada''[^;]*for update' then
     raise exception 'desactivar no tiene la forma de C2 y C11';

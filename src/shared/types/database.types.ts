@@ -968,8 +968,12 @@ export type Database = {
         }
         Returns: string
       }
-      _repartir_reuniones: { Args: { p_perfil: string; p_respaldo: string }; Returns: Json }
-      _repartir_solicitudes: { Args: { p_perfil: string }; Returns: Json }
+      _repartir_reuniones:
+        | { Args: { p_perfil: string; p_respaldo: string }; Returns: Json }
+        | { Args: { p_pausa: boolean; p_perfil: string; p_respaldo: string }; Returns: Json }
+      _repartir_solicitudes:
+        | { Args: { p_perfil: string }; Returns: Json }
+        | { Args: { p_pausa: boolean; p_perfil: string }; Returns: Json }
       _resumen_reunion: { Args: { p_anfitrion_anterior: string; p_reunion: string }; Returns: Json }
       _reunion_del_panel: {
         Args: { p_esperado: string; p_reunion_id: string }
@@ -1076,6 +1080,10 @@ export type Database = {
       }
       borrar_solicitud: {
         Args: { p_actualizado_en_esperado: string; p_solicitud_id: string }
+        Returns: Json
+      }
+      cambiar_en_turno: {
+        Args: { p_actualizado_en_esperado: string; p_en_turno: boolean; p_perfil_id: string }
         Returns: Json
       }
       cambiar_estado_solicitud: {
