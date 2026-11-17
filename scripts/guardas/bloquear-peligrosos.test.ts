@@ -133,3 +133,67 @@ describe('bloquear-peligrosos.sh con PILOTO=1', () => {
     expect(correr('git push origin main', { piloto: true }).motivo).toContain('bucle')
   })
 })
+
+// La excepción que pidió el dueño: integrar un PR propio de kit/* o plan/* con el CI en verde. Un `gh` de mentira responde
+// `gh pr view <n>` según el número: 1 kit en verde, 2 plan en verde, 3 kit con un check en rojo, 4 rama de un paso, 5 kit pendiente.
+describe('bloquear-peligrosos.sh: integrar un PR de kit o de plan', () => {
+  let bin = ''
+  const verde = '{"conclusion":"SUCCESS"},{"conclusion":"SKIPPED"}'
+  const respuestas: Record<string, string> = {
+    '1': `{"headRefName":"kit/x","isDraft":false,"statusCheckRollup":[${verde}]}`,
+    '2': `{"headRefName":"plan/x","isDraft":false,"statusCheckRollup":[${verde}]}`,
+    '3': `{"headRefName":"kit/x","isDraft":false,"statusCheckRollup":[${verde},{"conclusion":"FAILURE"}]}`,
+    '4': `{"headRefName":"ventas/p11","isDraft":false,"statusCheckRollup":[${verde}]}`,
+    '5': `{"headRefName":"kit/x","isDraft":false,"statusCheckRollup":[{"conclusion":"","state":"PENDING"}]}`,
+  }
+
+  beforeAll(() => {
+    bin = join(raiz, 'bin')
+    mkdirSync(bin)
+    const casos = Object.entries(respuestas)
+      .map(([n, json]) => `  ${n}) echo '${json}' ;;`)
+      .join('\n')
+    writeFileSync(
+      join(bin, 'gh'),
+      `#!/usr/bin/env bash\ncase "$3" in\n${casos}\n  *) exit 1 ;;\nesac\n`,
+      {
+        mode: 0o755,
+      },
+    )
+  })
+
+  function integrar(comando: string, piloto = false) {
+    const r = spawnSync('bash', [HOOK], {
+      input: JSON.stringify({ tool_name: 'Bash', tool_input: { command: comando }, cwd: enMain }),
+      encoding: 'utf8',
+      env: {
+        NODE_ENV: 'test',
+        PATH: `${bin}:${process.env['PATH'] ?? ''}`,
+        ...(piloto ? { PILOTO: '1' } : {}),
+      },
+    })
+    return r.status
+  }
+
+  it.each(['gh pr merge 1 --merge --delete-branch', 'gh pr merge 2 --squash'])(
+    'deja pasar: %s',
+    (comando) => {
+      expect(integrar(comando)).toBe(0)
+    },
+  )
+
+  it.each([
+    'gh pr merge 3 --merge',
+    'gh pr merge 4 --squash',
+    'gh pr merge 5 --merge',
+    'gh pr merge 1 --merge --admin',
+    'gh pr merge --merge',
+    'gh pr merge 99 --merge',
+  ])('bloquea: %s', (comando) => {
+    expect(integrar(comando)).toBe(2)
+  })
+
+  it('con PILOTO=1 no hay excepción', () => {
+    expect(integrar('gh pr merge 1 --merge', true)).toBe(2)
+  })
+})
