@@ -100,6 +100,16 @@ test('orden topológico y camino crítico', () => {
   assert.equal(largo.get('P03'), 3)
 })
 
+test('un plan más viejo no borra el estado de los pasos que sumó uno más nuevo', () => {
+  const previo = {
+    pasos: { P01: { estado: 'integrado' }, P99: { estado: 'asignado', carril: 'datos' } },
+  }
+  const e = estadoInicial(PLAN, previo)
+  assert.deepEqual(e.pasos.P99, { estado: 'asignado', carril: 'datos' })
+  assert.deepEqual(e.pasos.P01, { estado: 'integrado' })
+  assert.equal(e.pasos.P03.estado, 'pendiente')
+})
+
 test('al principio sólo arranca P01; el otro carril espera', () => {
   const e = estadoInicial(PLAN)
   const r = siguiente(PLAN, e, 'datos')
