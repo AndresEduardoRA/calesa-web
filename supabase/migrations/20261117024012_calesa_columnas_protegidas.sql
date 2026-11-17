@@ -43,6 +43,13 @@ begin
   if v_columna is not null then
     raise exception 'Este dato no se cambia desde aquí.' using errcode = '42501', hint = v_columna;
   end if;
+  -- La retención (C2) borra a los 24 meses de `ultimo_contacto_en`: directo sólo avanza (atrasarlo sería borrar, que el vendedor no
+  -- puede) y nunca al futuro (sería esquivar la retención). Un minuto de margen por la hora del servidor de la app. Sólo si cambia:
+  -- un valor futuro que dejó una RPC no bloquea editar otra columna.
+  if new.ultimo_contacto_en is distinct from old.ultimo_contacto_en
+     and (new.ultimo_contacto_en < old.ultimo_contacto_en or new.ultimo_contacto_en > now() + interval '1 minute') then
+    raise exception 'El último contacto no puede ir hacia atrás ni al futuro.' using errcode = '42501', hint = 'ultimo_contacto_en';
+  end if;
   return new;
 end;
 $$;

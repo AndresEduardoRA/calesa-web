@@ -41,7 +41,21 @@ select pruebas.caso('9', 'V1', $$update public.solicitudes set estado = 'realiza
 select pruebas.caso('9', 'V1', $$update public.solicitudes set ultimo_contacto_en = now() where id = {S1}$$, 'filas=1');
 rollback;
 
--- @test fila 10 · V1 · solicitudes · update de S2: 0 filas (la columna que sí tiene grant)
+-- @test fila 9b · V1 · solicitudes · ultimo_contacto_en sólo avanza y no va al futuro (la retención de C2 lo lee)
+begin;
+select pruebas.caso('9b', 'V1', $$update public.solicitudes set ultimo_contacto_en = '2000-01-01Z' where id = {S1}$$,
+  'error=42501:ultimo_contacto_en');
+select pruebas.caso('9b', 'V1', $$update public.solicitudes set ultimo_contacto_en = now() + interval '1 day' where id = {S1}$$,
+  'error=42501:ultimo_contacto_en');
+rollback;
+
+-- @test fila 9c · A · solicitudes · con un ultimo_contacto_en futuro (puesto por una RPC), otra columna se sigue editando
+begin;
+select pruebas.caso('9c', 'A', $$update public.solicitudes set email = 'corregido@ejemplo.test' where id = {S1}$$, 'filas=1',
+  $$update public.solicitudes set ultimo_contacto_en = now() + interval '1 day' where id = {S1}$$);
+rollback;
+
+-- @test fila 10 · V1 · solicitudes · update de S2: 0 filas (la columna que sí tiene grant; con P2 a), el estado va por RPC)
 begin;
 select pruebas.caso('10', 'V1', $$update public.solicitudes set ultimo_contacto_en = now() where id = {S2}$$, 'filas=0');
 rollback;
