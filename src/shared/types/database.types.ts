@@ -1064,6 +1064,10 @@ export type Database = {
         }[]
       }
       _validar_zona: { Args: { p_zona: string }; Returns: undefined }
+      actualizar_meet: {
+        Args: { p_actualizado_en_esperado: string; p_enlace_meet: string }
+        Returns: Json
+      }
       borrar_solicitud: {
         Args: { p_actualizado_en_esperado: string; p_solicitud_id: string }
         Returns: Json
@@ -1137,6 +1141,21 @@ export type Database = {
       }
       es_admin: { Args: Record<PropertyKey, never>; Returns: boolean }
       es_usuario_activo: { Args: Record<PropertyKey, never>; Returns: boolean }
+      guardar_config_calculadora: {
+        Args: {
+          p_actualizado_en_esperado: string
+          p_ciclo_dias: number
+          p_moneda_local: boolean
+          p_pct_local: number
+          p_pct_sena: number
+          p_precio: number
+          p_sena: number
+          p_sueldo: number
+          p_tasa: number
+          p_volatilidad: Database['public']['Enums']['volatilidad']
+        }
+        Returns: Json
+      }
       ids_con_alcance: { Args: { p_clave: string }; Returns: string[] }
       marcar_correo_cancelado: { Args: { p_id: string }; Returns: Json }
       marcar_correo_enviado: {
