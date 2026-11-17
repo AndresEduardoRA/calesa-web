@@ -1072,6 +1072,7 @@ export type Database = {
         Args: { p_reunion_id?: string; p_solicitud_id?: string; p_tope?: number }
         Returns: Json
       }
+      correos_vencidos: { Args: { p_ahora: string; p_tope?: number }; Returns: Json }
       crear_o_juntar_solicitud: {
         Args: {
           p_administracion?: number
