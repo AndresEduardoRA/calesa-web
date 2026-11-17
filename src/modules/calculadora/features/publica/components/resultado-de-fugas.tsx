@@ -54,7 +54,7 @@ export function ResultadoDeFugas({ vista }: { vista: VistaDelResultado }) {
       <a
         href={enlace}
         data-evento="clic_agendar"
-        className={buttonVariants({ className: 'min-h-[2.75rem] self-start px-6' })}
+        className={buttonVariants({ className: 'min-h-[44px] self-start px-6' })}
       >
         Agendar demo
       </a>

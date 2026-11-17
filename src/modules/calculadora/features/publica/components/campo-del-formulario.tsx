@@ -15,7 +15,7 @@ type Props = {
 }
 
 const CONTROL =
-  'min-h-[2.75rem] min-w-0 flex-1 bg-transparent px-3 text-(length:--text-base) text-(--color-ink) outline-none tabular-nums'
+  'min-h-[44px] min-w-0 flex-1 bg-transparent px-3 text-(length:--text-base) text-(--color-ink) outline-none tabular-nums'
 
 const CAJA =
   'flex min-w-0 items-center rounded-md border border-(--color-line-strong) bg-(--color-surface) focus-within:shadow-(--shadow-focus) has-aria-invalid:border-(--color-peligro)'

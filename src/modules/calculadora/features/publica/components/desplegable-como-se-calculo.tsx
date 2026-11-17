@@ -4,7 +4,7 @@ import type { ComoSeCalculo } from '../../../entities/como-se-calculo'
 export function DesplegableComoSeCalculo({ como }: { como: ComoSeCalculo }) {
   return (
     <details className="rounded-(--radius-card) border border-(--color-line) bg-(--color-surface) p-4">
-      <summary className="min-h-[2.75rem] cursor-pointer content-center font-medium text-(--color-ink)">
+      <summary className="min-h-[44px] cursor-pointer content-center font-medium text-(--color-ink)">
         Cómo se calculó
       </summary>
       <div className="mt-3 flex flex-col gap-3 text-(length:--text-sm) text-(--color-ink)">

@@ -1,5 +1,5 @@
 // El selector Mensual / Anual de las tarjetas (semilla §5.4, B6). Radios nativos: las flechas funcionan solas y el foco se ve. Cada
-// opción mide 44 px de alto como mínimo (2.75rem, crece con el texto).
+// opción mide 44 px de alto como mínimo, en px como pide `.claude/rules/ui.md` (crece con el texto).
 
 export type FormaDePago = 'mensual' | 'anual'
 
@@ -21,7 +21,7 @@ export function SelectorDePago({
       {OPCIONES.map(([opcion, texto]) => (
         <label
           key={opcion}
-          className="relative inline-flex min-h-[2.75rem] cursor-pointer items-center rounded-(--radius-pill) px-5 text-(length:--text-sm) font-medium text-(--color-ink) transition has-checked:bg-(--color-primario) has-checked:text-(--color-sobre-primario) has-focus-visible:shadow-(--shadow-focus)"
+          className="relative inline-flex min-h-[44px] cursor-pointer items-center rounded-(--radius-pill) px-5 text-(length:--text-sm) font-medium text-(--color-ink) transition has-checked:bg-(--color-primario) has-checked:text-(--color-sobre-primario) has-focus-visible:shadow-(--shadow-focus)"
         >
           <input
             type="radio"
