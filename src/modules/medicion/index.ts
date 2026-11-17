@@ -1,5 +1,6 @@
-// La entrada de servidor de `medicion`: las reglas puras de eventos, WhatsApp, embudo, cupos y latidos, y las lecturas del panel con la
-// sesión de quien mira. Las rutas `GET /api/whatsapp` y `POST /api/eventos` son de P34. No hay `client.ts`: nada viaja al navegador.
+// La entrada de servidor de `medicion`: las reglas puras de eventos, WhatsApp, embudo, cupos y latidos, las lecturas del panel con la
+// sesión de quien mira y la tarea diaria por puertos (los arma la ruta del cron, P42). Las rutas `GET /api/whatsapp` y
+// `POST /api/eventos` son de P37. No hay `client.ts`: nada viaja al navegador.
 export { esquemaEventoPublico, paginaDelEvento, type EventoPublico } from './entities/eventos'
 export { TIPOS_DE_EVENTO_PUBLICOS, type TipoDeEventoPublico } from './entities/tipos-de-evento'
 export {
@@ -33,5 +34,13 @@ export {
   type Latido,
   TAREA_DIARIA,
 } from './entities/latidos'
+export {
+  type Conteos,
+  type LatidoNuevo,
+  type PuertosDeLaTarea,
+  type ResumenDeLaTarea,
+  VUELTAS_DE_RETENCION,
+} from './entities/tarea-diaria'
 export { type EmbudoDelMes, leerEmbudoDelMes } from './infra/queries/embudo'
 export { leerLatidoDiario } from './infra/queries/latido'
+export { correrTareaDiaria } from './infra/tarea-diaria'
