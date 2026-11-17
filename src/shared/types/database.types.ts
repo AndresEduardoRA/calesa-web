@@ -1023,6 +1023,10 @@ export type Database = {
         }[]
       }
       _validar_zona: { Args: { p_zona: string }; Returns: undefined }
+      borrar_solicitud: {
+        Args: { p_actualizado_en_esperado: string; p_solicitud_id: string }
+        Returns: Json
+      }
       cambiar_estado_solicitud: {
         Args: {
           p_actualizado_en_esperado: string
@@ -1102,6 +1106,7 @@ export type Database = {
         }
         Returns: Json
       }
+      retencion_diaria: { Args: Record<PropertyKey, never>; Returns: Json }
       tiene_permiso: { Args: { p_clave: string }; Returns: boolean }
     }
     Enums: {
