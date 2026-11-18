@@ -1,0 +1,86 @@
+name: restauracion-semanal
+
+# La restauración de prueba de cada domingo (X13, semilla §9.6): baja el último respaldo de respaldo-diario.yml en main, lo descifra, lo
+# carga en una base temporal de Supabase (sin migraciones: auth, storage y extensions como en producción) y comprueba que estén las
+# tablas de P02 y que haya solicitudes. Mientras producción no tenga solicitudes, cae: es lo que pide la semilla.
+# - RESPALDO_DESTINATARIO: variable del repositorio. Sin ella el job real no corre.
+# - RESPALDO_CLAVE: secreto del Environment `respaldos` (restringido a main): la identidad age que descifra. Sólo la ve el paso que
+#   restaura.
+# En un PR que toca los respaldos o las migraciones corre la autoprueba, sin secretos: respalda la base local, la restaura y comprueba
+# (.github/respaldo/autoprueba.sh). Una migración que quita una tabla de P02 cae en su PR, no el domingo.
+on:
+  schedule:
+    - cron: '0 9 * * 0' # domingo 05:00 en La Paz, una hora después del respaldo
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/respaldo/**'
+      - '.github/workflows/respaldo-diario.yml'
+      - '.github/workflows/restauracion-semanal.yml'
+      - 'supabase/migrations/**'
+
+permissions:
+  contents: read
+  actions: read
+
+# Un push nuevo al PR cancela su autoprueba anterior; una corrida a mano va en su propio grupo y no se cancela (CI-1b).
+concurrency:
+  group: ${{ github.event_name == 'workflow_dispatch' && format('ci-manual-{0}-{1}', github.ref, github.run_id) || format('restauracion-{0}', github.head_ref || github.ref) }}
+  cancel-in-progress: ${{ github.event_name != 'workflow_dispatch' }}
+
+env:
+  # supabase/config.toml lee las credenciales de Google con env(): en CI van de relleno (como ci.yml).
+  SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID: relleno-ci
+  SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET: relleno-ci
+
+jobs:
+  restaurar:
+    name: Restaurar el último respaldo y comprobarlo
+    if: github.event_name != 'pull_request' && vars.RESPALDO_DESTINATARIO != ''
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment: respaldos
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/acciones/preparar
+      - name: age (de los paquetes de Ubuntu de la imagen)
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q --no-install-recommends age
+          age --version
+      - name: Bajar el último respaldo de main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          corrida=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow respaldo-diario.yml --branch main --status success \
+            --limit 1 --json databaseId --jq '.[0].databaseId // empty')
+          if [ -z "$corrida" ]; then
+            echo "::error::No hay un respaldo exitoso de respaldo-diario.yml que restaurar."
+            exit 1
+          fi
+          echo "Respaldo de la corrida $corrida."
+          gh run download "$corrida" --repo "$GITHUB_REPOSITORY" --name respaldo --dir "$RUNNER_TEMP/respaldo"
+      - name: Descifrar y cargar en la base temporal
+        env:
+          RESPALDO_CLAVE: ${{ secrets.RESPALDO_CLAVE }}
+          RESPALDO_DESTINATARIO: ${{ vars.RESPALDO_DESTINATARIO }}
+        run: bash .github/respaldo/restaurar.sh "$RUNNER_TEMP/respaldo"
+      - name: Comprobar las tablas de P02 y las solicitudes
+        run: bash .github/respaldo/comprobar.sh
+
+  autoprueba:
+    name: Autoprueba de los respaldos (sin secretos)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/acciones/preparar
+      - name: age (de los paquetes de Ubuntu de la imagen)
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q --no-install-recommends age
+          age --version
+      - run: pnpm exec supabase start -x studio,imgproxy,edge-runtime,logflare,vector
+      - name: Respaldar, restaurar y comprobar
+        run: bash scripts/candado.sh respaldos -- bash .github/respaldo/autoprueba.sh

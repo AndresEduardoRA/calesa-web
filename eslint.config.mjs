@@ -58,14 +58,28 @@ const SOLO_EL_AYUDANTE_DE_DIFERIDOS = {
     'El código diferido pasa por diferido() de @/shared/ui/diferido: carga con reintento y, sin red, avisa en su lugar en vez de tumbar la pantalla.',
 }
 
-// El cliente admin salta la RLS. Fuera de `src/shared/lib/supabase` lo crean sólo los archivos de
-// `DONDE_SE_PERMITE_EL_ADMIN`, que comprueban el permiso antes y no exponen más que `auth.admin` (.claude/rules/datos.md).
-// Hoy ninguno: el paso que lo necesite (invitar personas, un webhook, un cron) suma su archivo a la lista.
-const DONDE_SE_PERMITE_EL_ADMIN = []
+// El cliente admin salta la RLS. Fuera de `src/shared/lib/supabase` lo crean sólo los archivos de `DONDE_SE_PERMITE_EL_ADMIN`
+// (.claude/rules/datos.md, semilla §9.1):
+// - las rutas de API de §9.3 (escrituras públicas, cron y webhook), que validan Turnstile, límite, token o secreto y usan el admin sólo
+//   para la RPC pública que les toca;
+// - `acceso/infra/auth-admin.ts`, que comprueba el permiso con el cliente de quien invita y entrega sólo `auth.admin`.
+// Archivos exactos, sin globs: un ayudante junto a una ruta no hereda el permiso. Un archivo nuevo se suma en un paso del carril base,
+// con su caso en `src/shared/lib/supabase/admin.lint.test.ts`. Cada uno conserva el resto de las restricciones de su carpeta: sus bloques
+// van después del de `src/app` y del de `infra/` (en flat config, gana el último bloque que coincide).
+const RUTAS_CON_ADMIN = [
+  'src/app/api/solicitudes/route.ts',
+  'src/app/api/reservas/route.ts',
+  'src/app/api/horas/route.ts',
+  'src/app/api/whatsapp/route.ts',
+  'src/app/api/eventos/route.ts',
+  'src/app/api/cron/diario/route.ts',
+  'src/app/api/webhooks/resend/route.ts',
+]
+const INFRA_CON_ADMIN = ['src/modules/acceso/infra/auth-admin.ts']
+const DONDE_SE_PERMITE_EL_ADMIN = [...RUTAS_CON_ADMIN, ...INFRA_CON_ADMIN]
 const SOLO_DONDE_SE_PERMITE_EL_ADMIN = {
   name: '@/shared/lib/supabase/admin',
-  message:
-    'El cliente admin sólo se crea en los archivos de DONDE_SE_PERMITE_EL_ADMIN de eslint.config.mjs (.claude/rules/datos.md).',
+  message: `El cliente admin sólo se crea en los archivos de DONDE_SE_PERMITE_EL_ADMIN de eslint.config.mjs (.claude/rules/datos.md): ${DONDE_SE_PERMITE_EL_ADMIN.join(', ')}.`,
 }
 
 // El correo sale por un solo módulo, `src/shared/lib/email/` (`enviarEmail()`), con un adaptador por proveedor por su API REST: cambiar de
@@ -286,8 +300,18 @@ export default defineConfig([
       ],
     },
   },
+  // La función de `auth.admin` de acceso: lo mismo que el resto de `infra/`, menos la prohibición del admin.
   {
-    files: ['src/shared/lib/supabase/**/*.ts', ...DONDE_SE_PERMITE_EL_ADMIN],
+    files: INFRA_CON_ADMIN,
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        { paths: [SOLO_EL_AYUDANTE_DE_DIFERIDOS], patterns: [NINGUN_SDK_DE_CORREO] },
+      ],
+    },
+  },
+  {
+    files: ['src/shared/lib/supabase/**/*.ts'],
     rules: { 'no-restricted-imports': ['error', { patterns: [NINGUN_SDK_DE_CORREO] }] },
   },
 
@@ -300,6 +324,19 @@ export default defineConfig([
         'error',
         {
           paths: [SOLO_DONDE_SE_PERMITE_EL_ADMIN, SOLO_EL_AYUDANTE_DE_DIFERIDOS],
+          patterns: [SOLO_CLIENTES_DE_SHARED, LAS_ENTRADAS_Y_LAS_PANTALLAS, NINGUN_SDK_DE_CORREO],
+        },
+      ],
+    },
+  },
+  // Las rutas de API de §9.3: lo mismo que el resto de `src/app`, menos la prohibición del admin.
+  {
+    files: RUTAS_CON_ADMIN,
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [SOLO_EL_AYUDANTE_DE_DIFERIDOS],
           patterns: [SOLO_CLIENTES_DE_SHARED, LAS_ENTRADAS_Y_LAS_PANTALLAS, NINGUN_SDK_DE_CORREO],
         },
       ],

@@ -1,0 +1,3 @@
+# Lo que deja la CLI de Supabase al correr con --workdir .github/respaldo (base-temporal.sh).
+supabase/.temp/
+supabase/.branches/
