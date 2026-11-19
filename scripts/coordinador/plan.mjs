@@ -182,28 +182,68 @@ export function caminoCritico(plan) {
  * también los pasos que este plan no conoce: un carril que todavía corre con un plan.yaml más viejo no borra el estado de los pasos
  * que sumó un plan más nuevo (pasó en calesa-web: P28 y P32 volvieron a «pendiente» a mitad de su paso).
  */
-export function estadoInicial(plan, previo = { pasos: {} }, enMain = new Map()) {
+export function estadoInicial(
+  plan,
+  previo = { pasos: {} },
+  enMain = new Map(),
+  abiertos = new Map(),
+) {
   const pasos = { ...(previo.pasos ?? {}) }
   for (const p of plan.pasos) {
     const actual = previo.pasos?.[p.id] ?? { estado: 'pendiente' }
     const pr = enMain.get(p.id)
+    const abierto = abiertos.get(p.id)
     // Un paso cuyo PR ya entró a main está integrado, aunque una copia vieja del coordinador haya perdido su estado.
-    pasos[p.id] =
-      pr && actual.estado !== 'integrado'
-        ? { ...actual, estado: 'integrado', pr, arreglar: null, integro: 'main' }
-        : actual
+    if (pr && actual.estado !== 'integrado')
+      pasos[p.id] = { ...actual, estado: 'integrado', pr, arreglar: null, integro: 'main' }
+    // Un paso con su PR abierto en GitHub está publicado, aunque esta máquina no lo sepa (lo publicó otra, o se perdió el estado):
+    // sin esto se volvía a asignar como nuevo y su rama se rehacía desde main encima del PR.
+    else if (abierto && actual.estado === 'pendiente')
+      pasos[p.id] = {
+        ...actual,
+        estado: 'publicado',
+        pr: abierto,
+        carril: p.carril,
+        arreglar: null,
+      }
+    else pasos[p.id] = actual
   }
   return { pasos }
 }
 
-/** Los pasos que ya entraron a main, de los asuntos de sus commits («P22 · Layout … (#28)»): id → número de PR. */
+/**
+ * Los pasos que ya entraron a main, de los asuntos de sus commits: id → número de PR. Vale el squash («P22 · Layout … (#28)») y
+ * también el merge normal de la rama del paso («Merge pull request #2 from dueño/base/p01»): P01 de calesa-web entró así, y una
+ * máquina sin el estado del coordinador se lo volvía a dar al carril.
+ */
 export function integradosEnMain(asuntos) {
   const enMain = new Map()
   for (const linea of asuntos.split('\n')) {
-    const m = /^(P\d+) · .*\(#(\d+)\)$/.exec(linea.trim())
-    if (m && !enMain.has(m[1])) enMain.set(m[1], Number(m[2]))
+    const s = linea.trim()
+    const squash = /^(P\d+) · .*\(#(\d+)\)$/.exec(s)
+    const merge = /^Merge pull request #(\d+) from [^/\s]+\/[a-z0-9-]+\/(p\d+)$/i.exec(s)
+    const [id, pr] = squash
+      ? [squash[1], squash[2]]
+      : merge
+        ? [merge[2].toUpperCase(), merge[1]]
+        : []
+    if (id && !enMain.has(id)) enMain.set(id, Number(pr))
   }
   return enMain
+}
+
+/**
+ * Los PR de GitHub (`gh pr list --json number,headRefName`) que son de un paso del plan, por su rama `<carril>/<paso>`: id → número.
+ * Una rama que no es la del carril del paso no cuenta. Puro.
+ */
+export function pasosDePrs(plan, prs) {
+  const porRama = new Map(plan.pasos.map((p) => [rama(p.carril, p.id), p.id]))
+  const salida = new Map()
+  for (const { number, headRefName } of prs ?? []) {
+    const id = porRama.get(headRefName)
+    if (id && !salida.has(id)) salida.set(id, Number(number))
+  }
+  return salida
 }
 
 /** Cambia el estado de un paso, si la transición vale. Devuelve un estado nuevo; no muta. */

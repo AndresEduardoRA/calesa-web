@@ -1,0 +1,59 @@
+# git log origin/main --format=%s de calesa-web al 2026-11-18 (66d92df): squash de pasos, merges normales de ramas de paso y de kit.
+P38 · Reloj fijo de la base en las pruebas locales (#36)
+P13 · Tarea diaria (retención, reintentos, limpieza, cupos) y webhook de Resend (#35)
+P23 · Cliente admin en las rutas de §9.1 y respaldos diarios (#33)
+P34 · RPC de usuarios, turnos, horario y fotos que quedaron sin dueño (#34)
+P31 · RPC del Meet, WhatsApp, eventos y configuración; triggers de métricas (#32)
+P29 · Registro de correos sobre sus RPC y .ics adjunto (#31)
+fix(calidad): leer el plan y los pasos integrados de origin/main (#30)
+P22 · Layout (fuentes, tema, CSP y cabeceras, noindex) (#28)
+P27 · RPC del registro de correos (correos_salientes) (#29)
+P30 · RPC de solicitudes (crear o juntar, reasignar, desactivar, borrar) y retención (#27)
+P33 · Enlazar el límite de envíos con su RPC (#26)
+P09 · Calculadora pública, planes y tabla completa, prueba del cliente (textos con cifras) (#25)
+Merge pull request #24 from AndresEduardoRA/plan/pasos-propuestos-2
+docs(docs): sumar al plan lo que propusieron los pasos y nunca entró
+Merge pull request #19 from AndresEduardoRA/kit/migrar-remoto
+P32 · RPC del límite de envíos (contar_envio) (#23)
+fix(calidad): ajustar migrar-remoto a las reglas de los workflows
+Merge pull request #22 from AndresEduardoRA/kit/estado-sin-perder
+feat(calidad): dejar integrar las ramas de kit y de plan en verde (#21)
+P28 · Adjuntos en el correo y fecha con día de la semana (#20)
+fix(calidad): no perder el estado de los pasos que el plan no conoce
+P11 · Flujo público de agenda (formulario con gráfica, horas, reserva, confirmación, gestión) (#18)
+ci(calidad): migrar el supabase remoto cuando entra una migración
+plan · sumar P27 a P34, los pasos que propusieron P02, P05, P06 y P07 (#16)
+feat(calidad): contestar solas las compuertas que avisan (#15)
+P12 · Medición, botón de WhatsApp por turno y registro de eventos (#17)
+P05 · RPC de reserva, asignación, estados, WhatsApp, configuración y retención; triggers de métricas (#13)
+P06 · Seguridad compartida (Turnstile, límites por IP, tokens firmados, secreto del cron) (#14)
+P20 · Equipo y prospección (entities, lectura pública, sección «Quiénes somos») (#11)
+P07 · Notificaciones (plantillas, enviar, programar, cancelar, registro) (#12)
+P02 · Esquema, permisos, RLS, storage y semillas de datos (#10)
+P04 · Reglas de agenda y de solicitudes (entities) (#9)
+Merge pull request #5 from AndresEduardoRA/kit/verificar-y-compuertas
+Merge pull request #6 from AndresEduardoRA/kit/btree-gist-en-pglite
+P03 · Fórmulas de calculadora y escala, y precios (entities) (#8)
+Merge pull request #7 from AndresEduardoRA/docs/plantilla-de-la-semilla
+docs(docs): guardar las respuestas de la plantilla de la semilla
+fix(db): cargar btree_gist en el postgres de db:probar
+chore(config): contestar solas las compuertas de producto, datos y guardas
+feat(piloto): contestar solas las compuertas que elija el proyecto
+feat(piloto): verificar lo mínimo en local y dejar la autoridad al ci
+Merge pull request #4 from AndresEduardoRA/kit/limite-de-uso
+Merge pull request #3 from AndresEduardoRA/kit/integrar-rojos
+fix(piloto): reconocer el límite de 5 h y dormir en vez de fallar
+chore(config): integrar solos también los pasos rojos
+feat(kit): permitir integrar solos los pasos rojos
+Merge pull request #2 from AndresEduardoRA/base/p01
+docs(base): anotar decisiones y bitácora de p01
+test(base): probar que urlDelSitio lee el entorno ya validado
+feat(base): formatear montos y rangos en dólares
+feat(base): enviar y programar correos por resend
+feat(base): declarar las variables de entorno de calesa
+Merge pull request #1 from AndresEduardoRA/kit/arreglos-de-arranque
+fix(db): quitar a authenticated los privilegios que nunca usa
+fix(kit): instalar dependencias antes de escribir .env.carril
+test(piloto): no depender del disco de la máquina
+chore(db): generar los tipos de la base
+chore(kit): arrancar calesa-web desde el kit (semilla v7)

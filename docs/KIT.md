@@ -38,6 +38,10 @@ allá avanza de a un paso se rediseña para que **varios carriles trabajen a la 
    - Si el PR ya se integró, lo marca integrado.
    - Si el paso es verde o ámbar y el CI está en verde, lo integra (squash) y borra la rama.
    - Si el CI está en rojo o hay conflicto con `main`, se lo devuelve a su carril, y eso va antes que un paso nuevo.
+   - El estado (`<común de git>/coordinador/estado.json`) es una caché de la máquina. Sin él (otra PC, o borrado), se rehace solo:
+     integrado lo que entró a `main` (squash `Pxx · … (#N)` o merge de la rama `<carril>/pxx`) o tiene su PR integrado en GitHub,
+     y publicado lo que tiene su PR abierto. `siguiente` trae `origin/main` antes de decidir. Lo prueba `arranque-en-frio.test.mjs`
+     con el historial y el plan reales (`fixtures/`).
 5. Un paso rojo con el CI en verde queda esperando que lo integres tú en GitHub. Lo que depende de él espera. Si sumas `rojo` a
    `COORD_MERGE_AUTO` (`piloto.config`), el coordinador también los integra solo.
 6. Las compuertas esperan a la persona salvo la ámbar y los tipos de `PILOTO_AUTO` (`producto`, `datos`, `guardas`), que se contestan

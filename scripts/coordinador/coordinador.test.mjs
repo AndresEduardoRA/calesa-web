@@ -43,6 +43,7 @@ function repo() {
 case "$1 $2" in
   "pr view") cat "${respuestas}/$3.json" ;;
   "pr merge") echo "$3" >> "${respuestas}/merges"; echo '{"state":"MERGED"}' > "${respuestas}/$3.json" ;;
+  "pr list") cat "${respuestas}/lista-$4.json" 2>/dev/null || echo '[]' ;;
   *) exit 2 ;;
 esac
 `,
@@ -149,4 +150,22 @@ test('liberar e integrado a mano; transición inválida falla con mensaje', () =
   correr('siguiente', 'datos')
   assert.match(correr('liberar', 'P01', 'me', 'arrepentí'), /vuelve a pendiente/)
   assert.throws(() => correr('integrado', 'P01'), /no puede pasar de pendiente a integrado/)
+})
+
+test('otra máquina sin estado: lo publicado e integrado en GitHub no se vuelve a asignar', () => {
+  const { dir, correr, respuestas } = repo()
+  // P01 se integró (en otra máquina) y P02 tiene su PR abierto; este coordinador no tiene estado.
+  writeFileSync(
+    join(respuestas, 'lista-merged.json'),
+    JSON.stringify([{ number: 7, headRefName: 'datos/p01' }]),
+  )
+  writeFileSync(
+    join(respuestas, 'lista-open.json'),
+    JSON.stringify([{ number: 9, headRefName: 'ui/p02' }]),
+  )
+  assert.equal(JSON.parse(correr('siguiente', 'datos')).accion, 'terminado')
+  assert.match(JSON.parse(correr('siguiente', 'ui')).motivo, /P03 espera a que se integren: P02/)
+  const estado = JSON.parse(readFileSync(join(dir, '.git/coordinador/estado.json'), 'utf8'))
+  assert.equal(estado.pasos.P01.estado, 'integrado')
+  assert.deepEqual([estado.pasos.P02.estado, estado.pasos.P02.pr], ['publicado', 9])
 })
