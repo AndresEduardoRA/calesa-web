@@ -34,6 +34,7 @@ import {
   leerConsumo,
   leerPlan,
   marcar,
+  pasosDePrs,
   problemasDelPlan,
   siguiente,
   tablero,
@@ -110,13 +111,41 @@ function conCandado(fn) {
   }
 }
 
+// Los PR de los pasos según GitHub: el estado local es una caché de esta máquina, y otra pudo publicar o integrar. Sin gh o sin red,
+// vacío: queda lo que dice main.
+function prsDeGithub(plan, estadoPr) {
+  try {
+    const salida = gh(
+      'pr',
+      'list',
+      '--state',
+      estadoPr,
+      '--limit',
+      '500',
+      '--json',
+      'number,headRefName',
+    )
+    return pasosDePrs(plan, JSON.parse(salida))
+  } catch {
+    return new Map()
+  }
+}
+
 function leerEstado(plan) {
   const previo = existsSync(ESTADO) ? JSON.parse(readFileSync(ESTADO, 'utf8')) : { pasos: {} }
-  return estadoInicial(
-    plan,
-    previo,
-    integradosEnMain(desdeMain('log', 'origin/main', '--format=%s') ?? ''),
-  )
+  const enMain = integradosEnMain(desdeMain('log', 'origin/main', '--format=%s') ?? '')
+  for (const [id, pr] of prsDeGithub(plan, 'merged')) if (!enMain.has(id)) enMain.set(id, pr)
+  return estadoInicial(plan, previo, enMain, prsDeGithub(plan, 'open'))
+}
+
+// Antes de decidir, origin/main al día: en una máquina que no hizo fetch, la ref vieja hacía repetir pasos ya integrados.
+function traerMain() {
+  if (process.env.COORD_PLAN) return
+  try {
+    execFileSync('git', ['fetch', '-q', 'origin', 'main'], { stdio: 'ignore', timeout: 30_000 })
+  } catch {
+    // sin red o sin origin: se decide con la ref que haya
+  }
 }
 function guardarEstado(estado) {
   writeFileSync(`${ESTADO}.tmp`, JSON.stringify(estado, null, 2) + '\n')
@@ -237,6 +266,7 @@ try {
     case 'siguiente': {
       const [carril] = args
       if (!carril) fallar('uso: siguiente <carril>', 64)
+      traerMain()
       const plan = cargarPlan()
       const problemas = problemasDelPlan(plan)
       if (problemas.length) fallar(`el plan no es válido: ${problemas[0]} (corre «validar»)`)
