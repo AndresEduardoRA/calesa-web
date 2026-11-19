@@ -29,7 +29,13 @@ for programa in git jq flock tmux node; do command -v "$programa" >/dev/null || 
 CLAUDE=$(claude_bin)
 [ -n "$CLAUDE" ] || falta "no encuentro el binario de claude (CLAUDE_BIN, o la extensión de VS Code)."
 gh auth status >/dev/null 2>&1 || falta "gh no está autenticado (gh auth login): sin él no se publica ni se integra."
+# Una PC nueva: sin dependencias el coordinador cae («Cannot find package 'yaml'»); sin Docker no hay stack ni e2e.
+[ -d node_modules/yaml ] || falta "faltan las dependencias: pnpm install (en $RAIZ)."
+docker info >/dev/null 2>&1 || falta "Docker no responde: arráncalo (el carril necesita su Supabase y el e2e)."
+# El coordinador decide con origin/main: una ref vieja le hacía repetir pasos ya integrados.
+git fetch -q origin main || falta "no pude traer origin/main (¿sin red?): el coordinador decidiría con una ref vieja."
 coordinador validar >/dev/null || { coordinador validar; falta "el plan no es válido."; }
+echo "arrancar: $(coordinador tablero 2>/dev/null | sed -n 3p)"
 
 # 1. La copia.
 NUEVA="$COMUN/bin.nueva"
